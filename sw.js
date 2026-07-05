@@ -1,4 +1,4 @@
-const CACHE_NAME = "qimen-pwa-v5";
+const CACHE_NAME = "qimen-pwa-v6";
 const SCOPE = self.registration.scope;
 const ASSETS = [
   "",
