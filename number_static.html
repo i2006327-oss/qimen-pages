@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>數字奇門分析</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>數字奇門分析</h1>
+      <p>手機 / 銀行帳戶 / 車牌，純靜態版</p>
+    </div>
+  </header>
+  <main>
+    <section class="panel controls">
+      <div class="form-stack">
+        <label>分析類型
+          <select id="kind">
+            <option>手機號碼</option>
+            <option>銀行帳戶</option>
+            <option>車牌</option>
+          </select>
+        </label>
+        <label>號碼
+          <input id="value" autocomplete="off" autocapitalize="characters" placeholder="0912345678 / 帳戶 / ABC-1234">
+        </label>
+        <label>性別
+          <select id="gender">
+            <option>男</option>
+            <option>女</option>
+          </select>
+        </label>
+        <label>流年
+          <input id="year" inputmode="numeric">
+        </label>
+      </div>
+      <button id="run" class="primary" type="button">分析</button>
+    </section>
+    <section>
+      <div id="cards" class="number-cards"></div>
+      <pre id="result" class="text-card"></pre>
+    </section>
+  </main>
+  <script src="./number_core.js"></script>
+  <script>
+    const $s = (id) => document.getElementById(id);
+    $s("year").value = new Date().getFullYear();
+    function card(chart) {
+      const el = document.createElement("div");
+      el.className = "number-card";
+      el.innerHTML = `
+        <strong>${chart.chart_type}｜${chart.palace_name}</strong>
+        <div class="row"><span>引干</span><b>${chart.lead_stem}</b></div>
+        <div class="row"><span>八神</span><b>${chart.god}</b></div>
+        <div class="row"><span>九星</span><b>${chart.star}</b></div>
+        <div class="row"><span>八門</span><b>${chart.door}</b></div>
+        <div class="row"><span>天干</span><b>${chart.heaven_stem}</b></div>
+        <div class="row"><span>地干</span><b>${chart.earth_stem}</b></div>`;
+      return el;
+    }
+    $s("run").addEventListener("click", () => {
+      try {
+        const kind = $s("kind").value;
+        const value = $s("value").value;
+        const gender = $s("gender").value;
+        const year = $s("year").value;
+        const data = kind === "銀行帳戶"
+          ? QimenNumber.analyzeBank(value, gender, year)
+          : kind === "車牌"
+            ? QimenNumber.analyzePlate(value, gender, year)
+            : QimenNumber.analyzePhone(value, gender, year);
+        $s("cards").innerHTML = "";
+        data.charts.forEach((chart) => $s("cards").appendChild(card(chart)));
+        $s("result").textContent = data.analysis;
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  </script>
+</body>
+</html>
