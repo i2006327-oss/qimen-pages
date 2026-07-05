@@ -203,28 +203,28 @@ input, select {
 .chart-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 10px 0;
+  padding: 14px 10px;
+  margin-top: 10px;
+  border: 4px solid transparent;
+  border-radius: 8px;
+}
+
+.chart-scroll.chart-resonance-fuyin {
+  border-color: var(--purple);
+}
+
+.chart-scroll.chart-resonance-reverse {
+  border-color: var(--orange);
 }
 
 .qimen-grid {
   display: grid;
   position: relative;
-  grid-template-columns: 40px repeat(3, 136px) 40px;
-  grid-template-rows: 30px repeat(3, 138px) 30px;
+  grid-template-columns: 36px repeat(3, 132px) 36px;
+  grid-template-rows: 32px repeat(3, 136px) 32px;
   gap: 4px;
   width: max-content;
   min-width: 0;
-  border: 4px solid transparent;
-  border-radius: 8px;
-  padding: 4px;
-}
-
-.qimen-grid.chart-resonance-fuyin {
-  border-color: var(--purple);
-}
-
-.qimen-grid.chart-resonance-reverse {
-  border-color: var(--orange);
 }
 
 .chart-resonance-badge {
@@ -271,22 +271,27 @@ input, select {
   padding: 8px;
   display: grid;
   grid-template-areas:
-    "title god"
-    "marker marker"
+    "title title"
+    "god god"
     "stems signs";
-  grid-template-columns: minmax(0, 1fr) minmax(58px, auto);
-  grid-template-rows: auto minmax(22px, 1fr) auto;
-  gap: 3px 4px;
+  grid-template-columns: minmax(0, 1fr) minmax(54px, auto);
+  grid-template-rows: auto auto 1fr;
+  gap: 2px 4px;
 }
 
 .palace.marker-first {
   border-color: #d4b000;
-  box-shadow: inset 0 0 0 2px #f0ce39;
+  box-shadow: inset 0 0 0 3px #f0ce39;
 }
 
 .palace.marker-second {
   border-color: #36a752;
-  box-shadow: inset 0 0 0 2px #6ed27d;
+  box-shadow: inset 0 0 0 3px #6ed27d;
+}
+
+.palace.marker-first.marker-second {
+  border-color: #36a752;
+  box-shadow: inset 0 0 0 3px #f0ce39, inset 0 0 0 6px #6ed27d;
 }
 
 
@@ -303,7 +308,7 @@ input, select {
 .god {
   grid-area: god;
   color: var(--red);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   line-height: 1.25;
   min-width: 0;
@@ -316,7 +321,7 @@ input, select {
   display: grid;
   align-self: end;
   gap: 2px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.25;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -332,14 +337,14 @@ input, select {
 
 .star {
   color: #111;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1.2;
 }
 
 .door {
   color: #111;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 900;
   line-height: 1.15;
 }

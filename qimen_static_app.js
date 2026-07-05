@@ -21,7 +21,14 @@ function setStaticNow() {
 }
 
 function flagText(flags) {
-  return flags && flags.length ? `｜${flags.join("、")}` : "";
+  if (!flags || !flags.length) return "";
+  const symbols = flags.map((flag) => ({
+    "空亡": "◎",
+    "入墓": "墓",
+    "擊刑": "刑",
+    "門迫": "迫",
+  }[flag] || "")).filter(Boolean);
+  return symbols.length ? ` ${symbols.join("")}` : "";
 }
 
 function palaceClass(p) {
@@ -37,14 +44,12 @@ function renderStaticPalace(p) {
   div.className = palaceClass(p);
   div.style.gridRow = String(row + 1);
   div.style.gridColumn = String(col + 1);
-  const markerClass = p.marker.second && !p.marker.first ? "marker second" : "marker";
   div.innerHTML = `
     <div class="palace-title">${p.name}｜${p.direction}</div>
     <div class="god">${p.god || ""}</div>
-    ${p.marker.text ? `<div class="${markerClass}">${p.marker.text}</div>` : ""}
     <div class="stems">
-      <div class="${p.heavenClass || ""}">天干 ${p.heavenStem || ""}${flagText(p.heavenFlags)}</div>
-      <div class="${p.earthClass || ""}">地干 ${p.earthStem || ""}${flagText(p.earthFlags)}</div>
+      <div class="${p.heavenClass || ""}">${p.heavenStem || ""}${flagText(p.heavenFlags)}</div>
+      <div class="${p.earthClass || ""}">${p.earthStem || ""}${flagText(p.earthFlags)}</div>
     </div>
     <div class="right-signs">
       <div class="star ${p.starClass || ""}">${p.star || ""}${flagText(p.starFlags)}</div>
@@ -61,16 +66,10 @@ function renderStaticChart(data) {
   qs("issueText").textContent = data.issueTable;
   qs("textChart").textContent = data.textChart;
   const grid = qs("qimenGrid");
+  const frame = grid.parentElement;
   grid.innerHTML = "";
-  grid.className = `qimen-grid ${data.resonanceClass || ""}`.trim();
-  if (data.resonanceFlags && data.resonanceFlags.length) {
-    const badge = document.createElement("div");
-    badge.className = "chart-resonance-badge";
-    badge.textContent = data.resonanceFlags.join("、");
-    badge.style.gridRow = "1 / 6";
-    badge.style.gridColumn = "1 / 6";
-    grid.appendChild(badge);
-  }
+  grid.className = "qimen-grid";
+  frame.className = `chart-scroll ${data.resonanceClass || ""}`.trim();
   for (const item of data.outerBranches) {
     const label = document.createElement("div");
     label.className = `outer-label${item.horse ? " horse" : ""}`;
