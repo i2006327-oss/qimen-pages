@@ -72,11 +72,20 @@ function renderStaticChart(data) {
   frame.className = `chart-scroll ${data.resonanceClass || ""}`.trim();
   for (const item of data.outerBranches) {
     const label = document.createElement("div");
-    label.className = `outer-label${item.horse ? " horse" : ""}`;
-    label.textContent = item.label;
+    const side = item.col === 0 ? "left" : (item.col === 4 ? "right" : (item.row === 0 ? "top" : "bottom"));
+    label.className = `outer-label outer-${side}${item.horse ? " horse" : ""}`;
+    label.textContent = item.displayLabel || item.label;
     label.style.gridRow = String(item.row + 1);
     label.style.gridColumn = String(item.col + 1);
     grid.appendChild(label);
+    if (item.horse) {
+      const horse = document.createElement("div");
+      horse.className = `horse-badge horse-${side}`;
+      horse.textContent = "馬";
+      horse.style.gridRow = String(item.row + 1);
+      horse.style.gridColumn = String(item.col + 1);
+      grid.appendChild(horse);
+    }
   }
   for (const number of [4, 9, 2, 3, 5, 7, 8, 1, 6]) {
     grid.appendChild(renderStaticPalace(data.palaces[String(number)]));

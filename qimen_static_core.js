@@ -352,8 +352,7 @@
     return Object.entries(OUTER_BRANCH_POSITIONS).map(([branch, [row, col]]) => {
       const parts = [branch];
       if (map[branch]) parts.push(map[branch]);
-      if (branch === chart.horse_star) parts.push("馬");
-      return { branch, row, col, horse: branch === chart.horse_star, label: parts.join(" | ") };
+      return { branch, row, col, horse: branch === chart.horse_star, label: parts.concat(branch === chart.horse_star ? ["馬"] : []).join(" | "), displayLabel: parts.join(" | ") };
     });
   }
   function markerFor(number, chart) {

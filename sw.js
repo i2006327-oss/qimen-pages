@@ -1,15 +1,15 @@
-const CACHE_NAME = "qimen-pwa-v11";
+const CACHE_NAME = "qimen-pwa-v12";
 const SCOPE = self.registration.scope;
 const ASSETS = [
   "",
   "index.html",
   "qimen_static.html",
-  "qimen_static_core.js?v=11",
-  "qimen_static_app.js?v=11",
-  "lunar.js?v=11",
+  "qimen_static_core.js?v=12",
+  "qimen_static_app.js?v=12",
+  "lunar.js?v=12",
   "number_static.html",
-  "number_core.js?v=11",
-  "styles.css?v=11",
+  "number_core.js?v=12",
+  "styles.css?v=12",
   "manifest.webmanifest",
   "icon.svg"
 ].map((path) => new URL(path, SCOPE).toString());

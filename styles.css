@@ -220,8 +220,8 @@ input, select {
 .qimen-grid {
   display: grid;
   position: relative;
-  grid-template-columns: 36px repeat(3, 132px) 36px;
-  grid-template-rows: 32px repeat(3, 136px) 32px;
+  grid-template-columns: 50px repeat(3, 132px) 50px;
+  grid-template-rows: 34px repeat(3, 136px) 34px;
   gap: 4px;
   width: max-content;
   min-width: 0;
@@ -251,15 +251,71 @@ input, select {
   align-items: center;
   justify-content: center;
   color: var(--green);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   text-align: center;
   white-space: nowrap;
+  line-height: 1.15;
+  overflow: visible;
 }
 
-.outer-label.horse {
+.outer-left,
+.outer-right {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  white-space: normal;
+  letter-spacing: 1px;
+  justify-self: center;
+  align-self: center;
+}
+
+.outer-left {
+  transform: translateX(-2px);
+}
+
+.outer-right {
+  transform: translateX(2px);
+}
+
+.outer-top,
+.outer-bottom {
+  min-width: 0;
+}
+
+.horse-badge {
+  z-index: 5;
+  align-self: center;
+  justify-self: center;
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--red);
+  border-radius: 999px;
+  background: #fffdf8;
   color: var(--red);
-  font-size: 13px;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(70, 40, 20, 0.18);
+}
+
+.horse-top {
+  transform: translate(34px, 22px);
+}
+
+.horse-right {
+  transform: translate(-28px, -34px);
+}
+
+.horse-bottom {
+  transform: translate(-34px, -22px);
+}
+
+.horse-left {
+  transform: translate(28px, 34px);
 }
 
 .palace {
@@ -430,6 +486,15 @@ input, select {
     grid-template-columns: 86px repeat(3, minmax(180px, 1fr)) 86px;
     grid-template-rows: 32px repeat(3, 124px) 32px;
     width: auto;
+  }
+
+  .outer-left,
+  .outer-right {
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+    white-space: nowrap;
+    letter-spacing: 0;
+    transform: none;
   }
 
   .palace {
