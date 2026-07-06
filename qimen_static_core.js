@@ -40,7 +40,12 @@
   const OUTER_BRANCH_POSITIONS = { 巳: [0, 1], 午: [0, 2], 未: [0, 3], 申: [1, 4], 酉: [2, 4], 戌: [3, 4], 亥: [4, 3], 子: [4, 2], 丑: [4, 1], 寅: [3, 0], 卯: [2, 0], 辰: [1, 0] };
 
   function normalizeJieqi(name) {
-    return String(name).replace("谷雨", "穀雨").replace("惊蛰", "驚蟄").replace("小满", "小滿").replace("处暑", "處暑");
+    return String(name)
+      .replace("谷雨", "穀雨")
+      .replace("惊蛰", "驚蟄")
+      .replace("小满", "小滿")
+      .replace("芒种", "芒種")
+      .replace("处暑", "處暑");
   }
   function ganzhiIndex(gz) {
     const index = GANZHI_60.indexOf(gz);
