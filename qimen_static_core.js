@@ -233,6 +233,29 @@
     if (CONTROLS.has(`${b}${a}`)) return "第二用神剋第一用神：事情壓力較重，先降風險。";
     return "主客關係平穩。";
   }
+  function formatClock(totalMinutes) {
+    const value = ((totalMinutes % 1440) + 1440) % 1440;
+    const hour = Math.floor(value / 60);
+    const minute = value % 60;
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  }
+  function keInfo(solar, timeBranch) {
+    const total = Number(solar.hour) * 60 + Number(solar.minute || 0);
+    const offset = (total >= 1380 || total < 60) ? (total - 1380 + 1440) % 1440 : (total - 60) % 120;
+    const index = Math.min(8, Math.floor(offset / 15) + 1);
+    const blockStart = total - offset;
+    const start = blockStart + (index - 1) * 15;
+    const end = start + 14;
+    const half = index <= 4 ? "上四刻" : "下四刻";
+    return {
+      index,
+      half,
+      branch: timeBranch,
+      offset,
+      range: `${formatClock(start)}-${formatClock(end)}`,
+      label: `${timeBranch}時第${index}刻（${half}｜${formatClock(start)}-${formatClock(end)}）`,
+    };
+  }
   function buildChart({ year, month, day, hour, minute = 0, yuanMethod = "yinpan" }) {
     year = Number(year); month = Number(month); day = Number(day); hour = Number(hour); minute = Number(minute) || 0;
     if (!window.Solar) throw new Error("lunar.js 尚未載入");
@@ -378,8 +401,10 @@
     const good = Object.values(chart.palaces).sort((a, b) => palaceScore(b) - palaceScore(a)).slice(0, 4);
     const risks = Object.values(chart.palaces).filter((p) => p.flags.length).slice(0, 5);
     const chartType = options.chartType || "終身盤（出生盤）";
-    const isPrediction = String(chartType).includes("時盤") || String(chartType).includes("預測");
-    const condition = isPrediction ? `問事條件：${options.presence || "人在現場"}｜${options.askerGender || "男問"}｜${options.divinerGender || "男預測師"}` : "終身盤：以出生時間定盤，不使用人在/不在場與問事者條件。";
+    const isKe = String(chartType).includes("刻盤");
+    const isPrediction = isKe || String(chartType).includes("時盤") || String(chartType).includes("預測");
+    const ke = keInfo(chart.solar, chart.bazi[3][1]);
+    const condition = isPrediction ? `${isKe ? `刻盤：${ke.label}。` : ""}問事條件：${options.presence || "人在現場"}｜${options.askerGender || "男問"}｜${options.divinerGender || "男預測師"}` : "終身盤：以出生時間定盤，不使用人在/不在場與問事者條件。";
     const lines = [
       "解說盤：",
       `排盤類型：${chartType}`,
@@ -405,10 +430,14 @@
     const resonanceFlags = resonance === "無" ? [] : resonance.split("、");
     const palaces = {};
     Object.entries(chart.palaces).forEach(([n, p]) => { palaces[n] = palaceView(p, chart); });
+    const isKe = String(options.chartType || "").includes("刻盤");
+    const ke = keInfo(chart.solar, chart.bazi[3][1]);
+    const keHeader = isKe ? `｜刻：${ke.label}` : "";
+    const keSummary = isKe ? `｜刻盤：${ke.label}` : "";
     return {
       chartType: options.chartType || "靜態排盤",
-      header: `盤種：${options.chartType || "靜態排盤"}｜時間：${chart.solar.year}-${String(chart.solar.month).padStart(2, "0")}-${String(chart.solar.day).padStart(2, "0")} ${String(chart.solar.hour).padStart(2, "0")}:${String(chart.solar.minute).padStart(2, "0")}｜四柱：${chart.bazi[0]}年 ${chart.bazi[1]}月 ${chart.bazi[2]}日 ${chart.bazi[3]}時｜節氣：${chart.jieqi}｜${chart.yuan}｜${chart.dun}遁${chart.ju}局`,
-      summary: `旬首：${chart.xun}(${chart.xun_hidden_stem})｜空亡：${chart.xun_empty}｜馬星：${chart.horse_star}｜十二長生用干：${chart.longevity_stem}｜值符：${chart.value_star}｜值使：${chart.value_door}｜值使落宮：${PALACE_NAMES[chart.value_door_palace]}｜四害統計：${chart.global_flags.join("、") || "無"}｜伏吟/反吟：${resonance}`,
+      header: `盤種：${options.chartType || "靜態排盤"}｜時間：${chart.solar.year}-${String(chart.solar.month).padStart(2, "0")}-${String(chart.solar.day).padStart(2, "0")} ${String(chart.solar.hour).padStart(2, "0")}:${String(chart.solar.minute).padStart(2, "0")}${keHeader}｜四柱：${chart.bazi[0]}年 ${chart.bazi[1]}月 ${chart.bazi[2]}日 ${chart.bazi[3]}時｜節氣：${chart.jieqi}｜${chart.yuan}｜${chart.dun}遁${chart.ju}局`,
+      summary: `旬首：${chart.xun}(${chart.xun_hidden_stem})｜空亡：${chart.xun_empty}｜馬星：${chart.horse_star}｜十二長生用干：${chart.longevity_stem}｜值符：${chart.value_star}｜值使：${chart.value_door}｜值使落宮：${PALACE_NAMES[chart.value_door_palace]}｜四害統計：${chart.global_flags.join("、") || "無"}｜伏吟/反吟：${resonance}${keSummary}`,
       palaces,
       resonanceFlags,
       resonanceClass: resonanceFlags.some((f) => f.endsWith("反吟")) ? "chart-resonance-reverse" : (resonanceFlags.some((f) => f.endsWith("伏吟")) ? "chart-resonance-fuyin" : ""),
