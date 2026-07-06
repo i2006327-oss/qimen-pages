@@ -351,8 +351,9 @@
     Object.values(chart.palaces).forEach((p) => p.longevity.forEach(([b, s]) => { map[b] = s; }));
     return Object.entries(OUTER_BRANCH_POSITIONS).map(([branch, [row, col]]) => {
       const parts = [branch];
-      if (map[branch]) parts.push(map[branch]);
-      return { branch, row, col, horse: branch === chart.horse_star, label: parts.concat(branch === chart.horse_star ? ["馬"] : []).join(" | "), displayLabel: parts.join(" | ") };
+      const stage = map[branch] || "";
+      if (stage) parts.push(stage);
+      return { branch, stage, row, col, horse: branch === chart.horse_star, label: parts.concat(branch === chart.horse_star ? ["馬"] : []).join(" | "), displayLabel: parts.join(" | ") };
     });
   }
   function markerFor(number, chart) {

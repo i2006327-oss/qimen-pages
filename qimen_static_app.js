@@ -74,7 +74,15 @@ function renderStaticChart(data) {
     const label = document.createElement("div");
     const side = item.col === 0 ? "left" : (item.col === 4 ? "right" : (item.row === 0 ? "top" : "bottom"));
     label.className = `outer-label outer-${side}${item.horse ? " horse" : ""}`;
-    label.textContent = item.displayLabel || item.label;
+    if (side === "left" || side === "right") {
+      label.innerHTML = `
+        <span class="outer-branch">${item.branch}</span>
+        <span class="outer-separator" aria-hidden="true"></span>
+        <span class="outer-stage">${item.stage || ""}</span>
+      `;
+    } else {
+      label.textContent = item.displayLabel || item.label;
+    }
     label.style.gridRow = String(item.row + 1);
     label.style.gridColumn = String(item.col + 1);
     grid.appendChild(label);
