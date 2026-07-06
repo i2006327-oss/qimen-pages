@@ -395,34 +395,170 @@
     }
     return lines.join("\n");
   }
+  const PALACE_TRAITS = {
+    1: "思考深、反應快，適合研究、資訊、流動型資源，但也容易想太多。",
+    2: "重現實、重責任，能扛事，但容易被家庭、資金或身體壓力綁住。",
+    3: "行動快、想突破，有衝勁，也容易急躁、先做後修。",
+    4: "重人脈、資訊、規劃與彈性，適合談判、媒合、技術包裝。",
+    5: "中宮寄坤，事情多落到責任、現實條件與資源配置。",
+    6: "重制度、專業、名聲與權責，適合工程、管理、規範型工作。",
+    7: "重表達、交易、口碑與人際互動，利業務與溝通，也防口舌。",
+    8: "重累積、技術、資產與穩定，慢熱但能做長期成果。",
+    9: "重曝光、名聲、感情熱度與靈感，利被看見，也防虛火。",
+  };
+  const GOD_FEEL = {
+    值符: "有貴人、核心資源與正規力量，宜走正道、找關鍵人物。",
+    螣蛇: "想像力強但也多疑，容易曖昧、糾結、想很多。",
+    太陰: "適合暗中準備、精算與布局，事情不宜太早曝光。",
+    六合: "有人緣、合作、感情與媒合訊號，重點是把條件談清楚。",
+    白虎: "壓力大、衝突強，適合硬仗，但要防受傷、破財與口氣過硬。",
+    玄武: "資訊差、投機、隱情與曖昧重，利查資料，但要防騙與帳務不清。",
+    九地: "穩守、慢成、能累積，適合長線與低調布局。",
+    九天: "外放、擴張、遠方、曝光強，適合放大聲量與跨域。",
+  };
+  const STAR_FEEL = {
+    天蓬星: "膽子與慾望強，利研究風險與偏財，但忌貪快。",
+    天芮星: "問題、壓力、學習與健康負擔重，要先補漏洞。",
+    天沖星: "行動、突破、衝刺力強，快則有利，急則有傷。",
+    天輔星: "學習、專業、證照、教學與貴人扶持佳。",
+    天禽星: "中正穩重，能整合資源，但責任也重。",
+    天心星: "技術、醫療、管理、判斷力佳，適合用專業換錢。",
+    天柱星: "壓力、口舌、制度與聲音，利表達但要防硬碰硬。",
+    天任星: "承擔、資產、穩定與長期經營，適合慢慢做大。",
+    天英星: "曝光、名聲、文書、形象與感情熱度，利展示。",
+  };
+  const DOOR_FEEL = {
+    休門: "利休養、人情、貴人與穩定互動。",
+    生門: "利財利、資源、收入、經營與長期成長。",
+    傷門: "有突破也有損傷，適合修理問題，不宜衝動硬上。",
+    杜門: "重技術、閉關、保密與內部整理，慢但能做深。",
+    景門: "利曝光、作品、名聲與桃花，也容易虛火。",
+    死門: "事情卡住、保守、舊問題重，適合收尾、整理、止損。",
+    驚門: "口舌、驚動、消息、風險高，利提醒與查錯。",
+    開門: "利工作、機會、開局、合約與對外發展。",
+  };
+  const FLAG_ADVICE = {
+    空亡: "容易落空、想像多於落地，先確認人、事、錢是否真的到位",
+    入墓: "事情被壓住或卡住，要靠整理、等待與制度化解",
+    擊刑: "內外衝突、急躁或自我打結明顯，先降火再行動",
+    門迫: "環境壓力大，方法不順時要換路線，不要硬推",
+    干伏吟: "人事重複、卡在同一題，要先修正舊模式",
+    門伏吟: "做法反覆，容易原地打轉",
+    星伏吟: "心態與事件模式重複，需要換觀點",
+    干反吟: "人事變動快，容易反向發展",
+    門反吟: "做法容易被推翻，宜留備案",
+    星反吟: "外部局勢變動，判斷不可一次押死",
+  };
+  function hasThreeWonder(p) {
+    return [...((p.heaven_stem || "") + (p.earth_stem || ""))].some((s) => ["乙", "丙", "丁"].includes(s));
+  }
+  function flagsText(p) {
+    const flags = p.flags || [];
+    if (!flags.length) return "這宮沒有明顯四害，事情相對乾淨。";
+    return flags.map((f) => FLAG_ADVICE[f] || f).join("；") + "。";
+  }
+  function stripEnd(text) {
+    return String(text || "").replace(/[。；，\s]+$/g, "");
+  }
+  function palaceTone(p) {
+    return [
+      `${p.name}主「${stripEnd(PALACE_TRAITS[p.number] || "看宮位組合")}」`,
+      GOD_FEEL[p.god],
+      STAR_FEEL[p.star],
+      DOOR_FEEL[p.door],
+    ].filter(Boolean).map(stripEnd).join("；");
+  }
+  function topicScore(p, topic) {
+    let score = palaceScore(p);
+    if (topic === "財運") {
+      if (["生門", "開門", "休門"].includes(p.door)) score += 3;
+      if (["天心星", "天任星", "天輔星"].includes(p.star)) score += 2;
+      if (["值符", "九地", "九天", "太陰"].includes(p.god)) score += 1;
+    } else if (topic === "感情") {
+      if (p.god === "六合") score += 4;
+      if (["休門", "開門", "生門", "景門"].includes(p.door)) score += 2;
+      if (hasThreeWonder(p)) score += 1;
+    } else if (topic === "事業") {
+      if (["開門", "景門", "生門"].includes(p.door)) score += 3;
+      if (["天心星", "天輔星", "天任星"].includes(p.star)) score += 2;
+      if (["值符", "九天"].includes(p.god)) score += 2;
+    } else if (topic === "健康") {
+      if (p.star === "天芮星") score += 4;
+      if (["死門", "傷門", "驚門"].includes(p.door)) score += 2;
+      if (["白虎", "螣蛇"].includes(p.god)) score += 2;
+      score += (p.flags || []).length;
+    }
+    return score;
+  }
+  function bestTopicPalace(chart, topic) {
+    const palaces = Object.values(chart.palaces);
+    return palaces.sort((a, b) => topicScore(b, topic) - topicScore(a, topic))[0];
+  }
+  function topicLine(topic, p) {
+    const base = `${topic}看${p.name}，見${p.god}、${p.star}、${p.door}。`;
+    if (topic === "財運") return `${base}${p.door === "生門" ? "有資源與收入訊號，" : ""}${p.star === "天心星" ? "偏向用專業、技術、判斷力換錢，" : ""}${flagsText(p)}`;
+    if (topic === "感情") return `${base}${p.god === "六合" ? "有和合、人緣或媒合訊號，" : ""}${["玄武", "螣蛇"].includes(p.god) ? "但曖昧、猜測與話沒講清楚會變成問題，" : ""}${flagsText(p)}`;
+    if (topic === "事業") return `${base}${["開門", "景門", "生門"].includes(p.door) ? "有對外開展、曝光或資源機會，" : ""}${flagsText(p)}`;
+    if (topic === "健康") return `${base}這是盤象提醒，偏向壓力、作息、舊問題或身心耗損；身體仍以醫療檢查為準。${flagsText(p)}`;
+    return `${base}${flagsText(p)}`;
+  }
   function explain(chart, options = {}) {
     const first = chart.palaces[chart.first_yongshen_palace];
     const second = chart.palaces[chart.second_yongshen_palace];
     const good = Object.values(chart.palaces).sort((a, b) => palaceScore(b) - palaceScore(a)).slice(0, 4);
     const risks = Object.values(chart.palaces).filter((p) => p.flags.length).slice(0, 5);
+    const wealth = bestTopicPalace(chart, "財運");
+    const relationship = bestTopicPalace(chart, "感情");
+    const career = bestTopicPalace(chart, "事業");
+    const health = bestTopicPalace(chart, "健康");
     const chartType = options.chartType || "終身盤（出生盤）";
     const isKe = String(chartType).includes("刻盤");
     const isPrediction = isKe || String(chartType).includes("時盤") || String(chartType).includes("預測");
     const ke = keInfo(chart.solar, chart.bazi[3][1]);
     const condition = isPrediction ? `${isKe ? `刻盤：${ke.label}。` : ""}問事條件：${options.presence || "人在現場"}｜${options.askerGender || "男問"}｜${options.divinerGender || "男預測師"}` : "終身盤：以出生時間定盤，不使用人在/不在場與問事者條件。";
+    const relationText = relation(first, second);
+    const firstHasRisk = first.flags && first.flags.length;
+    const secondHasRisk = second.flags && second.flags.length;
+    const headline = firstHasRisk && secondHasRisk
+      ? "這盤不是缺機會，而是自己狀態與事情本體都帶阻力，先釐清條件再出手。"
+      : firstHasRisk
+        ? "這盤先處理自己的狀態；你一穩，事情才容易順。"
+        : secondHasRisk
+          ? "這盤事情本體有卡點，不宜只靠熱情推進，要先拆風險。"
+          : "這盤主客相對乾淨，可以看準方向後主動布局。";
     const lines = [
       "解說盤：",
       `排盤類型：${chartType}`,
       condition,
-      `第一用神：${isPrediction ? "問測者/日干" : "命主/日干"}落${first.name}，${first.god}、${first.star}、${first.door}，天干${first.heaven_stem}／地干${first.earth_stem}。`,
-      `第二用神：${isPrediction ? "所問事/時干" : "行為反應/時干"}落${second.name}，${second.god}、${second.star}、${second.door}，天干${second.heaven_stem}／地干${second.earth_stem}。`,
-      relation(first, second),
       "",
-      `四害：${chart.global_flags.join("、") || "無"}。伏吟反吟看統計表。`,
-      `馬星：${chart.horse_star}。十二長生用干：${chart.longevity_stem}。`,
+      `一、總結：${headline}`,
+      `主客關係：${relationText}`,
       "",
-      "可用宮位：",
-      ...good.map((p) => `- ${p.name}：${p.god}、${p.star}、${p.door}，分數${palaceScore(p)}。${p.flags.length ? `標記：${p.flags.join("、")}` : "無明顯標記"}。`),
+      "二、用神判斷",
+      `第一用神（${isPrediction ? "問測者/日干" : "命主/日干"}）：落${first.name}，${palaceTone(first)}。${flagsText(first)}`,
+      `第二用神（${isPrediction ? "所問事/時干" : "行為反應/時干"}）：落${second.name}，${palaceTone(second)}。${flagsText(second)}`,
+      "",
+      "三、各項運勢",
+      `財運：${topicLine("財運", wealth)}`,
+      `感情：${topicLine("感情", relationship)}`,
+      `事業：${topicLine("事業", career)}`,
+      `健康：${topicLine("健康", health)}`,
+      "",
+      "四、可用宮位",
+      ...good.map((p) => `- ${p.name}：${p.god}、${p.star}、${p.door}。適合用「${stripEnd(DOOR_FEEL[p.door] || "依盤面取用")}」的方式處理。${flagsText(p)}`),
+      "",
+      `五、四害與動象：${chart.global_flags.join("、") || "無"}。馬星在${chart.horse_star}，代表事情有移動、變化或需要主動走出去的部分。十二長生用干為${chart.longevity_stem}。`,
     ];
     if (risks.length) {
-      lines.push("", "風險位：");
-      risks.forEach((p) => lines.push(`- ${p.name}：${p.flags.join("、")}。`));
+      lines.push("", "六、風險位");
+      risks.forEach((p) => lines.push(`- ${p.name}：${p.flags.join("、")}。${flagsText(p)}`));
     }
+    lines.push("", "七、行動建議");
+    if (relationText.includes("生第二")) lines.push("- 你會是付出與推動的一方，適合主動，但要設定時間、金錢與情緒停損。");
+    else if (relationText.includes("生第一")) lines.push("- 外部或對方有回應你的機會，重點是接住資源，不要因懷疑而錯過。");
+    else if (relationText.includes("剋第一")) lines.push("- 壓力在你身上，先守住基本盤，重大決策不要一次押滿。");
+    else if (relationText.includes("剋第二")) lines.push("- 你能控制局面，但語氣與手段要柔一點，避免把好事推硬。");
+    else lines.push("- 先把條件說清楚，再用可用宮位的方向去推進。");
     return lines.join("\n");
   }
   function toResponse(chart, options = {}) {
