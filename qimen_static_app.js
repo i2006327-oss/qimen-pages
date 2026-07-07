@@ -28,8 +28,12 @@ function flagText(flags) {
     "擊刑": "刑",
     "門迫": "迫",
   }[flag] || "")).filter(Boolean);
-  return symbols.length ? ` ${symbols.join("")}` : "";
+  return symbols.length ? symbols.join("") : "";
 }
+
+const shortGods = { 值符: "符", 螣蛇: "蛇", 太陰: "陰", 六合: "六", 白虎: "白", 玄武: "玄", 九地: "地", 九天: "天" };
+const shortStars = { 天蓬星: "蓬", 天芮星: "芮", 天沖星: "沖", 天輔星: "輔", 天禽星: "禽", 天心星: "心", 天柱星: "柱", 天任星: "任", 天英星: "英" };
+const shortDoors = { 休門: "休", 生門: "生", 傷門: "傷", 杜門: "杜", 景門: "景", 死門: "死", 驚門: "驚", 開門: "開" };
 
 function palaceClass(p) {
   const classes = ["palace"];
@@ -45,17 +49,15 @@ function renderStaticPalace(p) {
   div.className = palaceClass(p);
   div.style.gridRow = String(row + 1);
   div.style.gridColumn = String(col + 1);
+  div.title = `${p.name}｜${p.direction}｜${p.god || ""}｜${p.star || ""}｜${p.door || ""}`;
   div.innerHTML = `
-    <div class="palace-title">${p.name}｜${p.direction}${special}</div>
-    <div class="god">${p.god || ""}</div>
-    <div class="stems">
-      <div class="${p.heavenClass || ""}">${p.heavenStem || ""}${flagText(p.heavenFlags)}</div>
-      <div class="${p.earthClass || ""}">${p.earthStem || ""}${flagText(p.earthFlags)}</div>
-    </div>
-    <div class="right-signs">
-      <div class="star ${p.starClass || ""}">${p.star || ""}${flagText(p.starFlags)}</div>
-      <div class="door ${p.doorClass || ""}">${p.door || ""}${flagText(p.doorFlags)}</div>
-    </div>
+    <div class="god">${shortGods[p.god] || p.god || ""}</div>
+    <div class="palace-show">顯示</div>
+    <div class="stem-line heaven-stem ${p.heavenClass || ""}">${p.heavenStem || ""}${flagText(p.heavenFlags)}</div>
+    <div class="stem-line earth-stem ${p.earthClass || ""}">${p.earthStem || ""}${flagText(p.earthFlags)}</div>
+    <div class="star ${p.starClass || ""}">${shortStars[p.star] || p.star || ""}${flagText(p.starFlags)}</div>
+    <div class="door ${p.doorClass || ""}">${shortDoors[p.door] || p.door || ""}${flagText(p.doorFlags)}</div>
+    <div class="palace-specials">${special}</div>
   `;
   return div;
 }
@@ -78,11 +80,13 @@ function renderStaticChart(data) {
     if (side === "left" || side === "right") {
       label.innerHTML = `
         <span class="outer-branch">${item.branch}</span>
-        <span class="outer-separator" aria-hidden="true"></span>
         <span class="outer-stage">${item.stage || ""}</span>
       `;
     } else {
-      label.textContent = item.displayLabel || item.label;
+      label.innerHTML = `
+        <span class="outer-branch">${item.branch}</span>
+        <span class="outer-stage">${item.stage || ""}</span>
+      `;
     }
     label.style.gridRow = String(item.row + 1);
     label.style.gridColumn = String(item.col + 1);

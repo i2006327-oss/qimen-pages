@@ -220,10 +220,10 @@ input, select {
 .qimen-grid {
   display: grid;
   position: relative;
-  grid-template-columns: 50px repeat(3, 132px) 50px;
-  grid-template-rows: 34px repeat(3, 136px) 34px;
+  grid-template-columns: 42px repeat(3, minmax(0, 1fr)) 42px;
+  grid-template-rows: 32px repeat(3, 104px) 32px;
   gap: 4px;
-  width: max-content;
+  width: 100%;
   min-width: 0;
 }
 
@@ -257,17 +257,18 @@ input, select {
   white-space: nowrap;
   line-height: 1.15;
   overflow: visible;
+  gap: 3px;
 }
 
 .outer-left,
 .outer-right {
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   white-space: normal;
   justify-self: center;
   align-self: center;
-  width: 44px;
-  min-height: 52px;
+  width: 38px;
+  min-height: 58px;
   padding: 2px 0;
 }
 
@@ -277,6 +278,18 @@ input, select {
   width: 100%;
   text-align: center;
   line-height: 1.05;
+}
+
+.outer-branch {
+  color: var(--red);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.outer-stage {
+  color: #0768d8;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .outer-separator {
@@ -335,15 +348,15 @@ input, select {
   min-width: 0;
   background: var(--paper);
   border: 1px solid var(--line);
-  padding: 8px;
+  padding: 6px 7px;
   display: grid;
   grid-template-areas:
-    "title title"
-    "god god"
-    "stems signs";
-  grid-template-columns: minmax(0, 1fr) minmax(54px, auto);
-  grid-template-rows: auto auto 1fr;
-  gap: 2px 4px;
+    "god badge badge"
+    "heaven spacer star"
+    "earth special door";
+  grid-template-columns: 30px minmax(0, 1fr) 38px;
+  grid-template-rows: 24px 1fr 1fr;
+  gap: 0 4px;
 }
 
 .palace.marker-first {
@@ -362,16 +375,6 @@ input, select {
 }
 
 
-.palace-title {
-  grid-area: title;
-  color: var(--green);
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.25;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
 .special-flag {
   display: inline-block;
   margin-left: 4px;
@@ -386,46 +389,70 @@ input, select {
 
 .god {
   grid-area: god;
-  color: var(--red);
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1.25;
-  min-width: 0;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-.stems {
-  grid-area: stems;
-  display: grid;
-  align-self: end;
-  gap: 2px;
-  font-size: 13px;
-  line-height: 1.25;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.right-signs {
-  grid-area: signs;
-  align-self: end;
-  min-width: 0;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-.star {
   color: #111;
-  font-size: 13px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.palace-show {
+  grid-area: badge;
+  justify-self: end;
+  align-self: start;
+  padding: 2px 6px;
+  background: #0b701f;
+  color: #fffdf8;
+  font-size: 10px;
   font-weight: 800;
   line-height: 1.2;
 }
 
-.door {
+.stem-line {
+  align-self: end;
   color: #111;
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 500;
   line-height: 1.15;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.heaven-stem {
+  grid-area: heaven;
+}
+
+.earth-stem {
+  grid-area: earth;
+}
+
+.palace-specials {
+  grid-area: special;
+  align-self: end;
+  justify-self: start;
+  min-width: 0;
+}
+
+.star {
+  grid-area: star;
+  color: #111;
+  align-self: end;
+  justify-self: end;
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.door {
+  grid-area: door;
+  color: #111;
+  align-self: end;
+  justify-self: end;
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.05;
 }
 
 .marker {
@@ -506,17 +533,17 @@ input, select {
   }
 
   .qimen-grid {
-    grid-template-columns: 86px repeat(3, minmax(180px, 1fr)) 86px;
-    grid-template-rows: 32px repeat(3, 124px) 32px;
+    grid-template-columns: 82px repeat(3, minmax(132px, 1fr)) 82px;
+    grid-template-rows: 34px repeat(3, 118px) 34px;
     width: auto;
   }
 
   .outer-left,
   .outer-right {
-    flex-direction: row;
-    white-space: nowrap;
-    width: auto;
-    min-height: 0;
+    flex-direction: column;
+    white-space: normal;
+    width: 64px;
+    min-height: 64px;
     transform: none;
   }
 
@@ -526,16 +553,16 @@ input, select {
   }
 
   .palace {
-    padding: 10px;
-    grid-template-columns: minmax(0, 1fr) minmax(72px, auto);
+    padding: 8px 10px;
+    grid-template-columns: 44px minmax(0, 1fr) 54px;
   }
 
   .star {
-    font-size: 14px;
+    font-size: 24px;
   }
 
   .door {
-    font-size: 18px;
+    font-size: 24px;
   }
 
   .marker {
