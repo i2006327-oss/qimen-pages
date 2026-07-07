@@ -6,6 +6,9 @@
   const palaceDirections = { 1: "北", 2: "西南", 3: "東", 4: "東南", 5: "中", 6: "西北", 7: "西", 8: "東北", 9: "南" };
   const branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
   const branchPalace = { 子: 1, 未: 2, 申: 2, 卯: 3, 辰: 4, 巳: 4, 戌: 6, 亥: 6, 酉: 7, 丑: 8, 寅: 8, 午: 9 };
+  const stemElements = { 甲: "木", 乙: "木", 丙: "火", 丁: "火", 戊: "土", 己: "土", 庚: "金", 辛: "金", 壬: "水", 癸: "水" };
+  const generates = new Set(["木火", "火土", "土金", "金水", "水木"]);
+  const controls = new Set(["木土", "土水", "水火", "火金", "金木"]);
   const mapping = {
     "0": { palace_male: 2, palace_female: 8, lead_stem: "庚", god: "假符", star: "假蓬星", door: "假休門", heaven_stem: "癸", earth_stem: "癸" },
     "1": { palace: 1, lead_stem: "辛", god: "值符", star: "天蓬星", door: "休門", heaven_stem: "甲", earth_stem: "甲" },
@@ -120,6 +123,38 @@
     };
   }
 
+  function reduceToNine(total) {
+    if (!total) return "0";
+    return String(((total - 1) % 9) + 1);
+  }
+
+  function stemRelation(heavenStem, earthStem) {
+    const heaven = stemElements[heavenStem];
+    const earth = stemElements[earthStem];
+    if (!heaven || !earth) return "天盤地盤五行不明，先看門星神吉凶。";
+    if (heaven === earth) return `天盤${heavenStem}${heaven}、地盤${earthStem}${earth}比和：人車狀態同氣，穩定但容易照原習慣走。`;
+    if (generates.has(`${heaven}${earth}`)) return `天盤${heavenStem}${heaven}生地盤${earthStem}${earth}：外在行動能扶住車況與結果，行車較順。`;
+    if (generates.has(`${earth}${heaven}`)) return `地盤${earthStem}${earth}生天盤${heavenStem}${heaven}：車況或環境支援人，但也會消耗保養、油錢或時間。`;
+    if (controls.has(`${heaven}${earth}`)) return `天盤${heavenStem}${heaven}剋地盤${earthStem}${earth}：人容易壓車，開快、急切或使用強度高時要小心。`;
+    if (controls.has(`${earth}${heaven}`)) return `地盤${earthStem}${earth}剋天盤${heavenStem}${heaven}：車況、路況或規則容易反過來卡人，要重保養與守規矩。`;
+    return `天盤${heavenStem}${heaven}、地盤${earthStem}${earth}關係普通，回到門星神判斷。`;
+  }
+
+  function chartFromPlateSix(window, gender, palace, palaceName, chartType) {
+    return {
+      chart_type: chartType,
+      digits: window.join(""),
+      palace,
+      palace_name: palaceName,
+      lead_stem: mapping[window[1]].lead_stem,
+      god: mapping[window[2]].god,
+      star: mapping[window[3]].star,
+      door: mapping[window[4]].door,
+      heaven_stem: mapping[window[0]].heaven_stem,
+      earth_stem: mapping[window[5]].earth_stem,
+    };
+  }
+
   function digitItem(digit, index, gender) {
     const raw = mapping[digit];
     const palace = numberPalace(digit, gender);
@@ -138,30 +173,21 @@
     };
   }
 
-  function analysisWindow(digits, options = {}) {
+  function analysisWindow(digits) {
     if (digits.length >= 7) {
       return {
         window: digits.slice(-7),
         mode: digits.length === 7 ? "七碼全取" : `共${digits.length}碼，取尾七碼`,
       };
     }
-    if (options.allowSixPlus && digits.length === 6) {
-      return {
-        window: ["0", ...digits],
-        mode: "六碼車牌前補0成七位",
-      };
-    }
-    if (options.allowSixPlus) {
-      throw new Error("車牌轉碼後至少需要六碼；請輸入完整車牌，例如 ABC-123 或 ABC-1234");
-    }
     throw new Error("至少需要七位數字才能穿號分析");
   }
 
-  function analyzeDigits(digits, gender, flowYear, options = {}) {
+  function analyzeDigits(digits, gender, flowYear) {
     const year = Number(flowYear) || new Date().getFullYear();
     const flowBranch = yearBranch(year);
     const flowPalace = branchPalace[flowBranch];
-    const selected = analysisWindow(digits, options);
+    const selected = analysisWindow(digits);
     const window = selected.window;
     const items = digits.map((digit, index) => digitItem(digit, index, gender));
     const windowItems = window.map((digit, index) => digitItem(digit, index, gender));
@@ -185,6 +211,47 @@
       charts: [
         chartFromWindow(window, gender, palaceNames[numberPalace(window[0], gender)], "原宮"),
         chartFromWindow(window, gender, palaceNames[flowPalace], "流年宮"),
+      ],
+      counters,
+      scores: { wealth, risk, relationship },
+      items,
+    };
+  }
+
+  function analyzePlateDigits(digits, gender, flowYear) {
+    if (digits.length < 6) throw new Error("車牌轉碼後至少需要六碼；請輸入完整車牌，例如 ABC-123 或 ABC-1234");
+    const year = Number(flowYear) || new Date().getFullYear();
+    const flowBranch = yearBranch(year);
+    const flowPalace = branchPalace[flowBranch];
+    const window = digits.slice(-6);
+    const total = window.reduce((sum, digit) => sum + Number(digit), 0);
+    const mainDigit = reduceToNine(total);
+    const mainPalace = numberPalace(mainDigit, gender);
+    const items = digits.map((digit, index) => digitItem(digit, index, gender));
+    const windowItems = window.map((digit, index) => digitItem(digit, index, gender));
+    const counters = {
+      palace: countBy(windowItems, "palace_name"),
+      door: countBy(windowItems, "door"),
+      star: countBy(windowItems, "star"),
+      god: countBy(windowItems, "god"),
+    };
+    const wealth = (counters.door["生門"] || 0) + (counters.door["開門"] || 0) + (counters.star["天心星"] || 0) + (counters.star["天任星"] || 0);
+    const risk = (counters.door["死門"] || 0) + (counters.door["傷門"] || 0) + (counters.door["驚門"] || 0) + (counters.god["白虎"] || 0) + (counters.god["玄武"] || 0) + (counters.god["螣蛇"] || 0);
+    const relationship = (counters.god["六合"] || 0) + (counters.door["休門"] || 0) + (counters.door["景門"] || 0);
+    return {
+      digits,
+      window,
+      window_items: windowItems,
+      flow_year: year,
+      flow_branch: flowBranch,
+      flow_palace: flowPalace,
+      total_sum: total,
+      main_digit: mainDigit,
+      main_palace: mainPalace,
+      window_mode: digits.length === 6 ? "六碼全取" : `共${digits.length}碼，取末六碼`,
+      charts: [
+        chartFromPlateSix(window, gender, mainPalace, palaceNames[mainPalace], "主事宮"),
+        chartFromPlateSix(window, gender, flowPalace, palaceNames[flowPalace], "流年宮"),
       ],
       counters,
       scores: { wealth, risk, relationship },
@@ -249,6 +316,46 @@
     return out.join("\n");
   }
 
+  function plateLines(result, metaLines = []) {
+    const source = result.charts[0];
+    const flow = result.charts[1];
+    const first = result.window_items[0];
+    const tail = result.window_items[result.window_items.length - 1];
+    const roleNames = ["首碼/方向", "引干", "八神", "九星", "八門", "尾碼/結果"];
+    const out = [
+      "車牌奇門分析：",
+      "規則：車牌採六碼法；英文字母 A=1 到 Z=26 後取 1-9 數根，數字照原數字；超過六碼取末六碼。",
+      "主事宮：末六碼總和取 1-9 定宮；首碼看能量與方向，尾碼看結果與收穫。",
+      ...metaLines,
+      `末六碼：${result.window.join("")}｜取碼方式：${result.window_mode}｜總和：${result.total_sum}｜主事數：${result.main_digit}｜主事宮：${palaceNames[result.main_palace]}`,
+      `首碼：${first.digit}，落${first.palace_name}，主車牌起勢與行車方向；尾碼：${tail.digit}，落${tail.palace_name}，主最後結果與收穫。`,
+      `天盤地盤：${stemRelation(source.heaven_stem, source.earth_stem)}`,
+      `財務/資源訊號：${result.scores.wealth}｜風險訊號：${result.scores.risk}｜人緣/舒適訊號：${result.scores.relationship}`,
+      `最多宮位：${top(result.counters.palace)}`,
+      `最多八門：${top(result.counters.door)}`,
+      `最多九星：${top(result.counters.star)}`,
+      `最多八神：${top(result.counters.god)}`,
+      "",
+      "車牌穿號盤：",
+      `- ${source.chart_type} ${source.palace_name}：引干${source.lead_stem}｜${source.god}｜${source.star}｜${source.door}｜天干${source.heaven_stem}｜地干${source.earth_stem}`,
+      `- ${flow.chart_type} ${flow.palace_name}：引干${flow.lead_stem}｜${flow.god}｜${flow.star}｜${flow.door}｜天干${flow.heaven_stem}｜地干${flow.earth_stem}`,
+      "",
+      "車牌盤詳細解說：",
+      `- 主事宮：${source.palace_name}。${palaceMeaning[source.palace_name] || ""}`,
+      `- 流年宮：${flow.palace_name}。${result.flow_year} 年容易放大此宮的人事物主題。`,
+      `- 八神：${source.god}。${godMeaning[source.god] || ""}`,
+      `- 九星：${source.star}。${starMeaning[source.star] || ""}`,
+      `- 八門：${source.door}。${doorMeaning[source.door] || ""}`,
+      "",
+      "車牌使用建議：",
+      ...subjectAdvice(result, "車牌").map((line) => `- ${line}`),
+      "",
+      "六碼對照：",
+      ...result.window_items.map((item, idx) => `${String(idx + 1).padStart(2, "0")}. ${item.digit}(${roleNames[idx]}) -> ${item.palace_name} ${item.lead_stem} ${item.god} ${item.star} ${item.door} 天干${item.heaven_stem} 地干${item.earth_stem}`),
+    ];
+    return out.join("\n");
+  }
+
   function analyzePhone(value, gender, flowYear) {
     const digits = digitsFromInput(value);
     const result = analyzeDigits(digits, gender, flowYear);
@@ -267,14 +374,14 @@
 
   function analyzePlate(value, gender, flowYear) {
     const converted = plateDigits(value);
-    const result = analyzeDigits(converted.digits, gender, flowYear, { allowSixPlus: true });
+    const result = analyzePlateDigits(converted.digits, gender, flowYear);
     result.subject = "車牌";
     result.conversion = converted.conversion;
     result.convertedNumber = converted.digits.join("");
     const conversionText = converted.conversion.map((item) => `${item.token}→${item.digit}`).join("、");
-    result.analysis = lines(result, "車牌", [
+    result.analysis = plateLines(result, [
       "英文字母用 A=1 到 Z=26 後取 1-9 數根；數字照原數字。",
-      "車牌支援六碼以上：六碼以前補0接七位穿號；七碼全取；超過七碼取尾七碼。",
+      "車牌支援六碼以上：六碼全取；超過六碼取末六碼，不再前補0。",
       `轉碼後位數：${converted.digits.length}｜分析用碼：${result.window.join("")}｜${result.window_mode}`,
       `轉碼：${conversionText}`,
     ]);
