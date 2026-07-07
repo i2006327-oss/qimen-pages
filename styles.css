@@ -372,6 +372,18 @@ input, select {
   overflow-wrap: anywhere;
 }
 
+.special-flag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #fff0d5;
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
 .god {
   grid-area: god;
   color: var(--red);

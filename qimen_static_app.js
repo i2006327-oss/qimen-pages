@@ -41,11 +41,12 @@ function palaceClass(p) {
 function renderStaticPalace(p) {
   const div = document.createElement("div");
   const [row, col] = staticGridPositions[p.number];
+  const special = (p.specialFlags || []).map((flag) => `<span class="special-flag">${flag}</span>`).join("");
   div.className = palaceClass(p);
   div.style.gridRow = String(row + 1);
   div.style.gridColumn = String(col + 1);
   div.innerHTML = `
-    <div class="palace-title">${p.name}｜${p.direction}</div>
+    <div class="palace-title">${p.name}｜${p.direction}${special}</div>
     <div class="god">${p.god || ""}</div>
     <div class="stems">
       <div class="${p.heavenClass || ""}">${p.heavenStem || ""}${flagText(p.heavenFlags)}</div>

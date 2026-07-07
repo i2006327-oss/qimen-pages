@@ -6,6 +6,7 @@
   const GRID = [[4, 9, 2], [3, 5, 7], [8, 1, 6]];
   const CENTER_HOST_PALACE = 2;
   const CLOCKWISE_RING = [1, 8, 3, 4, 9, 2, 7, 6];
+  const OUTER_PALACES = [1, 8, 3, 4, 9, 2, 7, 6];
   const STEMS = [..."甲乙丙丁戊己庚辛壬癸"];
   const BRANCHES = [..."子丑寅卯辰巳午未申酉戌亥"];
   const GANZHI_60 = Array.from({ length: 60 }, (_, i) => STEMS[i % 10] + BRANCHES[i % 12]);
@@ -32,6 +33,7 @@
   const LONGEVITY_START = { 甲: "亥", 乙: "午", 丙: "寅", 丁: "酉", 戊: "寅", 己: "酉", 庚: "巳", 辛: "子", 壬: "申", 癸: "卯" };
   const YANG_STEMS = new Set(["甲", "丙", "戊", "庚", "壬"]);
   const FOUR_HARMS = ["空亡", "入墓", "擊刑", "門迫"];
+  const FIVE_NOT_MEET_HOUR = { 甲: "庚", 乙: "辛", 丙: "壬", 丁: "癸", 戊: "甲", 己: "乙", 庚: "丙", 辛: "丁", 壬: "戊", 癸: "己" };
   const TOMB_BRANCH_BY_STEM = { 辛: "辰", 壬: "辰", 癸: "未", 丁: "丑", 己: "丑", 庚: "丑", 乙: "戌", 丙: "戌", 戊: "戌" };
   const STRIKE_PALACE_BY_STEM = { 戊: 3, 己: 2, 庚: 8, 辛: 9, 壬: 4, 癸: 4 };
   const OPPOSITE_PALACE = { 1: 9, 9: 1, 2: 8, 8: 2, 3: 7, 7: 3, 4: 6, 6: 4 };
@@ -196,6 +198,34 @@
     Object.values(palaces).forEach((p) => p.flags.forEach((flag) => { if (allowed.includes(flag)) found.add(flag); }));
     return allowed.filter((flag) => found.has(flag));
   }
+  function fiveNotMeet(dayGz, hourGz) {
+    return FIVE_NOT_MEET_HOUR[dayGz[0]] === hourGz[0];
+  }
+  function palaceHarmFlags(p) {
+    return (p.flags || []).filter((flag) => FOUR_HARMS.includes(flag));
+  }
+  function harmStats(palaces, palaceNumbers) {
+    const rows = palaceNumbers.map((number) => {
+      const p = palaces[number];
+      return { number, name: p.name, harms: palaceHarmFlags(p) };
+    }).filter((row) => row.harms.length);
+    const count = rows.reduce((sum, row) => sum + row.harms.length, 0);
+    const text = rows.map((row) => `${row.name}${row.harms.join("/")}`).join("、") || "無";
+    return { count, rows, text };
+  }
+  function specialFlagDetails(palaces, bazi, firstYongshenPalace) {
+    const details = [];
+    if (fiveNotMeet(bazi[2], bazi[3])) {
+      details.push(`五不遇時：${bazi[2]}日遇${bazi[3]}時，時干${bazi[3][0]}剋日干${bazi[2][0]}`);
+    }
+    const eight = harmStats(palaces, OUTER_PALACES);
+    const excluded = displayPalaceNumber(firstYongshenPalace);
+    const sevenPalaces = OUTER_PALACES.filter((number) => number !== excluded);
+    const seven = harmStats(palaces, sevenPalaces);
+    if (seven.count) details.push(`七宮四害：扣除第一用神${PALACE_NAMES[excluded]}後，其餘七宮共${seven.count}處｜${seven.text}`);
+    if (eight.count) details.push(`八宮四害：外圈八宮共${eight.count}處｜${eight.text}`);
+    return { details, seven, eight, excluded };
+  }
   function stemHeavenPalace(heavenStems, stem) {
     for (const [palace, stems] of Object.entries(heavenStems)) {
       if (String(stems).includes(stem)) return Number(palace);
@@ -326,6 +356,7 @@
         has_horse: branches.includes(horse),
       };
     }
+    const special = specialFlagDetails(palaces, bazi, firstYongshenPalace);
     const chart = {
       solar: { year, month, day, hour, minute },
       bazi, jieqi, yuan, dun, ju, xun,
@@ -338,6 +369,12 @@
       palaces,
       horse_star: horse,
       global_flags: collectFlags(palaces, FOUR_HARMS),
+      special_flags: special.details,
+      seven_harm_count: special.seven.count,
+      eight_harm_count: special.eight.count,
+      seven_harm_text: special.seven.text,
+      eight_harm_text: special.eight.text,
+      seven_harm_excluded_palace: special.excluded,
       first_yongshen_palace: firstYongshenPalace,
       second_yongshen_palace: secondYongshenPalace,
       annual_palace: annualPalace,
@@ -383,6 +420,7 @@
       starFlags: p.star_flags,
       doorFlags: p.door_flags,
       resonanceFlags: p.resonance_flags,
+      specialFlags: p.special_flags || [],
       marker: markerFor(p.number, chart),
       heavenClass: issueClass(p.heaven_flags),
       earthClass: issueClass(p.earth_flags),
@@ -392,11 +430,18 @@
     };
   }
   function issueTable(chart) {
-    const lines = ["標記統計表：", `四害統計：${chart.global_flags.join("、") || "無"}｜馬星：${chart.horse_star}｜十二長生用干：${chart.longevity_stem}`, "宮位｜十二長生/馬｜天干問題｜地干問題｜九星問題｜八門問題｜伏吟/反吟"];
+    const lines = [
+      "標記統計表：",
+      `特殊標註：${chart.special_flags.join("、") || "無"}`,
+      `七宮四害：${chart.seven_harm_count}處（扣除第一用神${PALACE_NAMES[chart.seven_harm_excluded_palace]}）｜${chart.seven_harm_text}`,
+      `八宮四害：${chart.eight_harm_count}處｜${chart.eight_harm_text}`,
+      `四害統計：${chart.global_flags.join("、") || "無"}｜馬星：${chart.horse_star}｜十二長生用干：${chart.longevity_stem}`,
+      "宮位｜十二長生/馬｜天干問題｜地干問題｜九星問題｜八門問題｜伏吟/反吟｜特殊標註",
+    ];
     for (const palace of [4, 9, 2, 3, 5, 7, 8, 1, 6]) {
       const p = chart.palaces[palace];
       const longevity = p.longevity.map(([b, s]) => `${b}${s}`).concat(p.has_horse ? ["馬"] : []).join("、") || "-";
-      lines.push(`${p.name}｜${longevity}｜${p.heaven_flags.join("、") || "-"}｜${p.earth_flags.join("、") || "-"}｜${p.star_flags.join("、") || "-"}｜${p.door_flags.join("、") || "-"}｜${p.resonance_flags.join("、") || "-"}`);
+      lines.push(`${p.name}｜${longevity}｜${p.heaven_flags.join("、") || "-"}｜${p.earth_flags.join("、") || "-"}｜${p.star_flags.join("、") || "-"}｜${p.door_flags.join("、") || "-"}｜${p.resonance_flags.join("、") || "-"}｜${(p.special_flags || []).join("、") || "-"}`);
     }
     return lines.join("\n");
   }
@@ -453,12 +498,14 @@
     干反吟: "人事變動快，容易反向發展",
     門反吟: "做法容易被推翻，宜留備案",
     星反吟: "外部局勢變動，判斷不可一次押死",
+    七宮四害: "扣除第一用神後，其餘七宮四害多，代表外部阻力密度高",
+    八宮四害: "外圈八宮四害多，代表全局阻力密度高，重大決策要先化解",
   };
   function hasThreeWonder(p) {
     return [...((p.heaven_stem || "") + (p.earth_stem || ""))].some((s) => ["乙", "丙", "丁"].includes(s));
   }
   function flagsText(p) {
-    const flags = p.flags || [];
+    const flags = [...(p.flags || []), ...(p.special_flags || [])];
     if (!flags.length) return "這宮沒有明顯四害，事情相對乾淨。";
     return flags.map((f) => FLAG_ADVICE[f] || f).join("；") + "。";
   }
@@ -511,7 +558,7 @@
     const first = chart.palaces[chart.first_yongshen_palace];
     const second = chart.palaces[chart.second_yongshen_palace];
     const good = Object.values(chart.palaces).sort((a, b) => palaceScore(b) - palaceScore(a)).slice(0, 4);
-    const risks = Object.values(chart.palaces).filter((p) => p.flags.length).slice(0, 5);
+    const risks = Object.values(chart.palaces).filter((p) => p.flags.length || (p.special_flags || []).length).slice(0, 5);
     const wealth = bestTopicPalace(chart, "財運");
     const relationship = bestTopicPalace(chart, "感情");
     const career = bestTopicPalace(chart, "事業");
@@ -552,11 +599,11 @@
       "四、可用宮位",
       ...good.map((p) => `- ${p.name}：${p.god}、${p.star}、${p.door}。適合用「${stripEnd(DOOR_FEEL[p.door] || "依盤面取用")}」的方式處理。${flagsText(p)}`),
       "",
-      `五、四害與動象：${chart.global_flags.join("、") || "無"}。馬星在${chart.horse_star}，代表事情有移動、變化或需要主動走出去的部分。十二長生用干為${chart.longevity_stem}。`,
+      `五、四害與動象：${chart.global_flags.join("、") || "無"}。特殊標註：${chart.special_flags.join("、") || "無"}。馬星在${chart.horse_star}，代表事情有移動、變化或需要主動走出去的部分。十二長生用干為${chart.longevity_stem}。`,
     ];
     if (risks.length) {
       lines.push("", "六、風險位");
-      risks.forEach((p) => lines.push(`- ${p.name}：${p.flags.join("、")}。${flagsText(p)}`));
+      risks.forEach((p) => lines.push(`- ${p.name}：${[...(p.flags || []), ...(p.special_flags || [])].join("、")}。${flagsText(p)}`));
     }
     lines.push("", "七、行動建議");
     if (relationText.includes("生第二")) lines.push("- 你會是付出與推動的一方，適合主動，但要設定時間、金錢與情緒停損。");
@@ -578,7 +625,7 @@
     return {
       chartType: options.chartType || "靜態排盤",
       header: `盤種：${options.chartType || "靜態排盤"}｜時間：${chart.solar.year}-${String(chart.solar.month).padStart(2, "0")}-${String(chart.solar.day).padStart(2, "0")} ${String(chart.solar.hour).padStart(2, "0")}:${String(chart.solar.minute).padStart(2, "0")}${keHeader}｜四柱：${chart.bazi[0]}年 ${chart.bazi[1]}月 ${chart.bazi[2]}日 ${chart.bazi[3]}時｜節氣：${chart.jieqi}｜${chart.yuan}｜${chart.dun}遁${chart.ju}局`,
-      summary: `旬首：${chart.xun}(${chart.xun_hidden_stem})｜空亡：${chart.xun_empty}｜馬星：${chart.horse_star}｜十二長生用干：${chart.longevity_stem}｜值符：${chart.value_star}｜值使：${chart.value_door}｜值使落宮：${PALACE_NAMES[chart.value_door_palace]}｜四害統計：${chart.global_flags.join("、") || "無"}｜伏吟/反吟：${resonance}${keSummary}`,
+      summary: `旬首：${chart.xun}(${chart.xun_hidden_stem})｜空亡：${chart.xun_empty}｜馬星：${chart.horse_star}｜十二長生用干：${chart.longevity_stem}｜值符：${chart.value_star}｜值使：${chart.value_door}｜值使落宮：${PALACE_NAMES[chart.value_door_palace]}｜四害統計：${chart.global_flags.join("、") || "無"}｜特殊：${chart.special_flags.join("、") || "無"}｜伏吟/反吟：${resonance}${keSummary}`,
       palaces,
       resonanceFlags,
       resonanceClass: resonanceFlags.some((f) => f.endsWith("反吟")) ? "chart-resonance-reverse" : (resonanceFlags.some((f) => f.endsWith("伏吟")) ? "chart-resonance-fuyin" : ""),
