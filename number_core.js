@@ -120,30 +120,51 @@
     };
   }
 
-  function analyzeDigits(digits, gender, flowYear) {
-    if (digits.length < 7) throw new Error("至少需要七位數字才能穿號分析");
+  function digitItem(digit, index, gender) {
+    const raw = mapping[digit];
+    const palace = numberPalace(digit, gender);
+    return {
+      position: index + 1,
+      digit,
+      palace,
+      palace_name: palaceNames[palace],
+      direction: palaceDirections[palace],
+      lead_stem: raw.lead_stem,
+      god: raw.god,
+      star: raw.star,
+      door: raw.door,
+      heaven_stem: raw.heaven_stem,
+      earth_stem: raw.earth_stem,
+    };
+  }
+
+  function analysisWindow(digits, options = {}) {
+    if (digits.length >= 7) {
+      return {
+        window: digits.slice(-7),
+        mode: digits.length === 7 ? "七碼全取" : `共${digits.length}碼，取尾七碼`,
+      };
+    }
+    if (options.allowSixPlus && digits.length === 6) {
+      return {
+        window: ["0", ...digits],
+        mode: "六碼車牌前補0成七位",
+      };
+    }
+    if (options.allowSixPlus) {
+      throw new Error("車牌轉碼後至少需要六碼；請輸入完整車牌，例如 ABC-123 或 ABC-1234");
+    }
+    throw new Error("至少需要七位數字才能穿號分析");
+  }
+
+  function analyzeDigits(digits, gender, flowYear, options = {}) {
     const year = Number(flowYear) || new Date().getFullYear();
     const flowBranch = yearBranch(year);
     const flowPalace = branchPalace[flowBranch];
-    const window = digits.slice(-7);
-    const items = digits.map((digit, index) => {
-      const raw = mapping[digit];
-      const palace = numberPalace(digit, gender);
-      return {
-        position: index + 1,
-        digit,
-        palace,
-        palace_name: palaceNames[palace],
-        direction: palaceDirections[palace],
-        lead_stem: raw.lead_stem,
-        god: raw.god,
-        star: raw.star,
-        door: raw.door,
-        heaven_stem: raw.heaven_stem,
-        earth_stem: raw.earth_stem,
-      };
-    });
-    const windowItems = items.slice(-7);
+    const selected = analysisWindow(digits, options);
+    const window = selected.window;
+    const items = digits.map((digit, index) => digitItem(digit, index, gender));
+    const windowItems = window.map((digit, index) => digitItem(digit, index, gender));
     const counters = {
       palace: countBy(windowItems, "palace_name"),
       door: countBy(windowItems, "door"),
@@ -160,6 +181,7 @@
       flow_year: year,
       flow_branch: flowBranch,
       flow_palace: flowPalace,
+      window_mode: selected.mode,
       charts: [
         chartFromWindow(window, gender, palaceNames[numberPalace(window[0], gender)], "原宮"),
         chartFromWindow(window, gender, palaceNames[flowPalace], "流年宮"),
@@ -199,7 +221,7 @@
       `${subject}奇門分析：`,
       "規則：七位穿號，依序取「宮位、引干、神、星、門、天干、地干」。0 與 5 不入中宮，男寄坤二、女寄艮八。",
       ...metaLines,
-      `本次取尾七碼：${result.window.join("")}｜流年：${result.flow_year}年${result.flow_branch}，落${palaceNames[result.flow_palace]}`,
+      `本次用碼：${result.window.join("")}｜取碼方式：${result.window_mode}｜流年：${result.flow_year}年${result.flow_branch}，落${palaceNames[result.flow_palace]}`,
       `財務/資源訊號：${result.scores.wealth}｜風險訊號：${result.scores.risk}｜人緣/互動訊號：${result.scores.relationship}`,
       `最多宮位：${top(result.counters.palace)}`,
       `最多八門：${top(result.counters.door)}`,
@@ -245,13 +267,15 @@
 
   function analyzePlate(value, gender, flowYear) {
     const converted = plateDigits(value);
-    const result = analyzeDigits(converted.digits, gender, flowYear);
+    const result = analyzeDigits(converted.digits, gender, flowYear, { allowSixPlus: true });
     result.subject = "車牌";
     result.conversion = converted.conversion;
     result.convertedNumber = converted.digits.join("");
     const conversionText = converted.conversion.map((item) => `${item.token}→${item.digit}`).join("、");
     result.analysis = lines(result, "車牌", [
       "英文字母用 A=1 到 Z=26 後取 1-9 數根；數字照原數字。",
+      "車牌支援六碼以上：六碼以前補0接七位穿號；七碼全取；超過七碼取尾七碼。",
+      `轉碼後位數：${converted.digits.length}｜分析用碼：${result.window.join("")}｜${result.window_mode}`,
       `轉碼：${conversionText}`,
     ]);
     return result;
