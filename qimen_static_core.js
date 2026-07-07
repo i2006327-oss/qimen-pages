@@ -495,6 +495,29 @@
     驚門: "口舌、驚動、消息、風險高，利提醒與查錯。",
     開門: "利工作、機會、開局、合約與對外發展。",
   };
+  const STEM_IMAGES = {
+    甲: "核心、主管、主軸、重要人物",
+    乙: "柔性、人脈、文件細節、女性、曲折",
+    丙: "曝光、太陽、權力、明處、急速",
+    丁: "文書、票券、證件、訊息、燈火、女性",
+    戊: "資本、土地、牆面、固定物、大額資產",
+    己: "細節、帳務、內部流程、低處、雜物",
+    庚: "金屬、阻力、車輛、規則、硬件",
+    辛: "精密物、珠寶、錯誤、刀具、細小金屬",
+    壬: "流動、遠方、網路、江河、變數",
+    癸: "隱藏、陷阱、暗處、水、資料、困住",
+  };
+  const TOPIC_METHODS = {
+    一般: "先看第一用神與第二用神，再看四害、主客生剋與可用宮位。",
+    財運: "以生門、財象、第一用神、第二用神與四害密度判斷；先看能不能守住，再看能不能放大。",
+    投資: "先看第一用神是否受害，再看財宮與第二用神；四害多時不宜重押，反吟主變動快。",
+    感情: "看第一/第二用神、六合、休門、開門、景門與玄武螣蛇；重點是互動是否透明。",
+    事業: "看開門、值符、天心、天輔、天任與主客生剋；開展前先排除門迫與擊刑。",
+    健康: "看天芮、傷門、死門、驚門、白虎與用神四害；此為盤象提醒，仍以醫療檢查為準。",
+    失物: "以第二用神/時干為事物，可再直取物品象意；文件票券優先看丁，並以宮位方位與門星神坐實現場。",
+    店面客源: "看開門、生門、景門、六合與九天；四害所在方位常是客源卡住或環境要調整處。",
+    合作人際: "看六合、值符、開門、休門與雙方用神生剋；玄武螣蛇重時要把權責講明。",
+  };
   const FLAG_ADVICE = {
     空亡: "容易落空、想像多於落地，先確認人、事、錢是否真的到位",
     入墓: "事情被壓住或卡住，要靠整理、等待與制度化解",
@@ -527,6 +550,64 @@
       STAR_FEEL[p.star],
       DOOR_FEEL[p.door],
     ].filter(Boolean).map(stripEnd).join("；");
+  }
+  function stemImageText(stems) {
+    const chars = [...new Set([...(stems || "")].filter((s) => STEM_IMAGES[s]))];
+    return chars.map((s) => `${s}象${STEM_IMAGES[s]}`).join("、") || "天干象意不明顯";
+  }
+  function palaceObjectLine(p) {
+    const stems = `${p.heaven_stem || ""}${p.earth_stem || ""}`;
+    const longevity = p.longevity.map(([b, s]) => `${b}${s}`).join("、") || "無十二長生";
+    return `${p.name}${PALACE_DIRECTIONS[p.number]}方：${stemImageText(stems)}；${p.god || "無神"}看人事氣氛，${p.star || "無星"}看事件特質，${p.door || "無門"}看現場狀態；十二長生為${longevity}${p.has_horse ? "，兼帶馬星移動象" : ""}。`;
+  }
+  function findStemPalaces(chart, stem) {
+    return Object.values(chart.palaces).filter((p) => `${p.heaven_stem || ""}${p.earth_stem || ""}`.includes(stem));
+  }
+  function caseFocusPalaces(chart, topic, first, second, wealth, relationship, career, health) {
+    const out = [];
+    const add = (p) => { if (p && !out.some((x) => x.number === p.number)) out.push(p); };
+    add(first);
+    add(second);
+    if (topic === "財運" || topic === "投資") add(wealth);
+    if (topic === "感情" || topic === "合作人際") add(relationship);
+    if (topic === "事業" || topic === "店面客源") add(career);
+    if (topic === "健康") add(health);
+    if (topic === "失物") {
+      findStemPalaces(chart, "丁").forEach(add);
+      add(chart.palaces[chart.value_door_palace]);
+    }
+    return out.slice(0, 5);
+  }
+  function caseStyleLines(chart, options, first, second, wealth, relationship, career, health) {
+    const topic = options.topic || "一般";
+    const focus = caseFocusPalaces(chart, topic, first, second, wealth, relationship, career, health);
+    const resonance = Object.values(chart.palaces).flatMap((p) => p.resonance_flags || []);
+    const hasReverse = resonance.some((f) => f.endsWith("反吟"));
+    const hasFuyin = resonance.some((f) => f.endsWith("伏吟"));
+    const posture = hasReverse
+      ? "此盤帶反吟象，事情容易反覆、翻轉、來回折騰，處理上宜快、宜斷、宜留備案。"
+      : hasFuyin
+        ? "此盤帶伏吟象，事情容易停在原模式，處理上要先換方法，不要只加力。"
+        : "此盤伏吟反吟不重，可依用神與四害直接判斷推進。";
+    const lines = [
+      "八、案例式斷盤",
+      `主題：${topic}。斷法：${TOPIC_METHODS[topic] || TOPIC_METHODS.一般}`,
+      `盤勢：${posture}`,
+      "取象：先把用神落宮的方位、神、星、門、天干與四害對照現實；能對上現場，就優先採用該宮判斷。",
+      ...focus.map((p) => `- ${palaceObjectLine(p)} ${flagsText(p)}`),
+    ];
+    if (topic === "失物") {
+      const ding = findStemPalaces(chart, "丁").map((p) => p.name).join("、") || "未見丁";
+      lines.push(`失物補充：文件、票券、證件可看丁；本盤丁象落在${ding}。找物時先看第二用神與丁象，再用宮位方位、低高明暗、門象環境去現場坐實。`);
+    }
+    if (topic === "投資") {
+      lines.push(`投資補充：七宮四害${chart.seven_harm_count}處、八宮四害${chart.eight_harm_count}處；四害密度高時先避險，不把「看起來有機會」當成可以重押。`);
+    }
+    if (topic === "店面客源") {
+      lines.push("店面補充：開門看入口與對外連結，生門看收入資源，景門看曝光；哪一宮受害，就先檢查對應方位與現場環境。");
+    }
+    lines.push("結論寫法：先說阻力在哪，再說哪個宮可用，最後給可執行動作；不要只說吉凶。");
+    return lines;
   }
   function topicScore(p, topic) {
     let score = palaceScore(p);
@@ -572,6 +653,7 @@
     const career = bestTopicPalace(chart, "事業");
     const health = bestTopicPalace(chart, "健康");
     const chartType = options.chartType || "終身盤（出生盤）";
+    const topic = options.topic || "一般";
     const isKe = String(chartType).includes("刻盤");
     const isPrediction = isKe || String(chartType).includes("時盤") || String(chartType).includes("預測");
     const ke = keInfo(chart.solar, chart.bazi[3][1]);
@@ -599,6 +681,7 @@
       `第二用神（${isPrediction ? "所問事/時干" : "行為反應/時干"}）：落${second.name}，${palaceTone(second)}。${flagsText(second)}`,
       "",
       "三、各項運勢",
+      `本次主題：${topic}`,
       `財運：${topicLine("財運", wealth)}`,
       `感情：${topicLine("感情", relationship)}`,
       `事業：${topicLine("事業", career)}`,
@@ -619,6 +702,7 @@
     else if (relationText.includes("剋第一")) lines.push("- 壓力在你身上，先守住基本盤，重大決策不要一次押滿。");
     else if (relationText.includes("剋第二")) lines.push("- 你能控制局面，但語氣與手段要柔一點，避免把好事推硬。");
     else lines.push("- 先把條件說清楚，再用可用宮位的方向去推進。");
+    lines.push("", ...caseStyleLines(chart, options, first, second, wealth, relationship, career, health));
     return lines.join("\n");
   }
   function toResponse(chart, options = {}) {

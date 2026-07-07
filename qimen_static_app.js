@@ -121,6 +121,7 @@ function runStaticChart() {
     });
     renderStaticChart(QimenStatic.toResponse(chart, {
       chartType,
+      topic: qs("topic").value,
       presence: qs("presence").value,
       askerGender: qs("askerGender").value,
       divinerGender: qs("divinerGender").value,
