@@ -386,11 +386,19 @@
   function outerBranches(chart) {
     const map = {};
     Object.values(chart.palaces).forEach((p) => p.longevity.forEach(([b, s]) => { map[b] = s; }));
+    const heavenStems = {};
+    Object.values(chart.palaces).forEach((p) => { heavenStems[p.number] = p.heaven_stem || ""; });
+    const hourLookupStem = chart.bazi[3][0] === "甲" ? chart.xun_hidden_stem : chart.bazi[3][0];
+    const hourHeavenPalace = Number(Object.entries(heavenStems).find(([, stems]) => String(stems).includes(hourLookupStem))?.[0] || chart.hour_stem_palace);
+    const outerStems = rotateRingValues(heavenStems, hourHeavenPalace, chart.value_door_palace, false);
+    const branchStemAnchor = { 辰: 4, 午: 9, 申: 2, 卯: 3, 酉: 7, 寅: 8, 子: 1, 戌: 6 };
     return Object.entries(OUTER_BRANCH_POSITIONS).map(([branch, [row, col]]) => {
       const parts = [branch];
       const stage = map[branch] || "";
+      const stemPalace = branchStemAnchor[branch];
+      const stem = stemPalace ? outerStems[stemPalace] || "" : "";
       if (stage) parts.push(stage);
-      return { branch, stage, row, col, horse: branch === chart.horse_star, label: parts.concat(branch === chart.horse_star ? ["馬"] : []).join(" | "), displayLabel: parts.join(" | ") };
+      return { branch, stem, stage, row, col, horse: branch === chart.horse_star, label: parts.concat(branch === chart.horse_star ? ["馬"] : []).join(" | "), displayLabel: parts.join(" | ") };
     });
   }
   function markerFor(number, chart) {

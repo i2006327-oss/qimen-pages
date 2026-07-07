@@ -287,9 +287,23 @@ input, select {
 }
 
 .outer-stage {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.outer-stem {
   color: #0768d8;
   font-size: 12px;
   font-weight: 900;
+  display: inline-flex;
+  gap: 1px;
+}
+
+.outer-left .outer-stem,
+.outer-right .outer-stem {
+  flex-direction: column;
+  line-height: 1.05;
 }
 
 .outer-separator {
