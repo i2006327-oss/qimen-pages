@@ -413,6 +413,12 @@
     if (flags.includes("入墓")) return "issue-tomb";
     return "";
   }
+  function stemIssueItems(stems, branches, palace) {
+    return [...String(stems || "")].map((stem) => {
+      const flags = stemProblemFlags(stem, branches, palace);
+      return { stem, flags, className: issueClass(flags) };
+    });
+  }
   function palaceView(p, chart) {
     return {
       number: p.number,
@@ -425,6 +431,8 @@
       god: p.god,
       heavenFlags: p.heaven_flags,
       earthFlags: p.earth_flags,
+      heavenStemItems: stemIssueItems(p.heaven_stem, p.branches, p.number),
+      earthStemItems: stemIssueItems(p.earth_stem, p.branches, p.number),
       starFlags: p.star_flags,
       doorFlags: p.door_flags,
       resonanceFlags: p.resonance_flags,

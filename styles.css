@@ -366,9 +366,9 @@ input, select {
   display: grid;
   grid-template-areas:
     "god badge badge"
-    "heaven empty star"
+    "heaven spacer star"
     "earth special door";
-  grid-template-columns: 30px 20px minmax(34px, 1fr);
+  grid-template-columns: 30px minmax(0, 1fr) 38px;
   grid-template-rows: 24px 1fr 1fr;
   gap: 0 4px;
 }
@@ -450,9 +450,10 @@ input, select {
 }
 
 .empty-marker {
-  grid-area: empty;
-  align-self: center;
-  justify-self: center;
+  grid-area: star;
+  align-self: end;
+  justify-self: end;
+  margin-right: 1.25em;
   color: var(--blue);
   font-size: 18px;
   font-weight: 900;
@@ -574,7 +575,7 @@ input, select {
 
   .palace {
     padding: 5px 5px;
-    grid-template-columns: 23px 17px minmax(28px, 1fr);
+    grid-template-columns: 23px minmax(0, 1fr) 32px;
     grid-template-rows: 22px 1fr 1fr;
     gap: 0 2px;
   }
@@ -602,6 +603,7 @@ input, select {
 
   .empty-marker {
     font-size: 14px;
+    margin-right: 1.15em;
   }
 
   .special-flag {
@@ -632,25 +634,25 @@ input, select {
   }
 
   .horse-badge {
-    width: 24px;
-    height: 24px;
-    font-size: 15px;
+    width: 21px;
+    height: 21px;
+    font-size: 13px;
   }
 
   .horse-top {
-    transform: translate(26px, 18px);
+    transform: translate(18px, 0);
   }
 
   .horse-right {
-    transform: translate(10px, -28px);
+    transform: translate(0, -18px);
   }
 
   .horse-bottom {
-    transform: translate(-26px, -18px);
+    transform: translate(-18px, 0);
   }
 
   .horse-left {
-    transform: translate(-10px, 28px);
+    transform: translate(0, 18px);
   }
 }
 
@@ -685,7 +687,7 @@ input, select {
 
   .palace {
     padding: 8px 10px;
-    grid-template-columns: 44px 28px minmax(54px, 1fr);
+    grid-template-columns: 44px minmax(0, 1fr) 54px;
   }
 
   .star {
