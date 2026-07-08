@@ -537,6 +537,109 @@ input, select {
   border-bottom: 0;
 }
 
+@media (max-width: 520px) {
+  main {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .meta-card {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .legend-line {
+    font-size: 11px;
+  }
+
+  .chart-scroll {
+    padding: 12px 6px;
+  }
+
+  .qimen-grid {
+    grid-template-columns: 36px repeat(3, minmax(0, 1fr)) 36px;
+    grid-template-rows: 30px repeat(3, 104px) 30px;
+    gap: 3px;
+  }
+
+  .palace {
+    padding: 5px 5px;
+    grid-template-columns: 24px minmax(0, 1fr) 32px;
+    grid-template-rows: 22px 1fr 1fr;
+    gap: 0 2px;
+  }
+
+  .god {
+    font-size: 15px;
+    line-height: 1.05;
+  }
+
+  .palace-show {
+    padding: 1px 4px;
+    font-size: 9px;
+  }
+
+  .stem-line {
+    font-size: 12px;
+    line-height: 1.08;
+  }
+
+  .star,
+  .door {
+    font-size: 15px;
+    line-height: 1.02;
+  }
+
+  .special-flag {
+    margin-left: 2px;
+    padding: 1px 3px;
+    font-size: 9px;
+  }
+
+  .outer-label {
+    font-size: 11px;
+    line-height: 1.05;
+  }
+
+  .outer-left,
+  .outer-right {
+    width: 32px;
+    min-height: 52px;
+    gap: 2px;
+  }
+
+  .outer-branch {
+    font-size: 14px;
+  }
+
+  .outer-stage,
+  .outer-stem {
+    font-size: 10px;
+  }
+
+  .horse-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 15px;
+  }
+
+  .horse-top {
+    transform: translate(26px, 18px);
+  }
+
+  .horse-right {
+    transform: translate(10px, -28px);
+  }
+
+  .horse-bottom {
+    transform: translate(-26px, -18px);
+  }
+
+  .horse-left {
+    transform: translate(-10px, 28px);
+  }
+}
+
 @media (min-width: 760px) {
   .form-stack {
     grid-template-columns: repeat(3, 1fr);
