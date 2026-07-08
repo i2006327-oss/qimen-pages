@@ -46,6 +46,7 @@ function renderStaticPalace(p) {
   const div = document.createElement("div");
   const [row, col] = staticGridPositions[p.number];
   const special = (p.specialFlags || []).map((flag) => `<span class="special-flag">${flag}</span>`).join("");
+  const emptyMarker = (p.starFlags || []).length ? `<div class="empty-marker">◎</div>` : "";
   div.className = palaceClass(p);
   div.style.gridRow = String(row + 1);
   div.style.gridColumn = String(col + 1);
@@ -53,10 +54,11 @@ function renderStaticPalace(p) {
   div.innerHTML = `
     <div class="god">${shortGods[p.god] || p.god || ""}</div>
     <div class="palace-show">顯示</div>
-    <div class="stem-line heaven-stem ${p.heavenClass || ""}">${p.heavenStem || ""}${flagText(p.heavenFlags)}</div>
-    <div class="stem-line earth-stem ${p.earthClass || ""}">${p.earthStem || ""}${flagText(p.earthFlags)}</div>
-    <div class="star ${p.starClass || ""}">${shortStars[p.star] || p.star || ""}${flagText(p.starFlags)}</div>
-    <div class="door ${p.doorClass || ""}">${shortDoors[p.door] || p.door || ""}${flagText(p.doorFlags)}</div>
+    <div class="stem-line heaven-stem ${p.heavenClass || ""}">${p.heavenStem || ""}</div>
+    <div class="stem-line earth-stem ${p.earthClass || ""}">${p.earthStem || ""}</div>
+    <div class="star ${p.starClass || ""}">${shortStars[p.star] || p.star || ""}</div>
+    <div class="door ${p.doorClass || ""}">${shortDoors[p.door] || p.door || ""}</div>
+    ${emptyMarker}
     <div class="palace-specials">${special}</div>
   `;
   return div;

@@ -366,9 +366,9 @@ input, select {
   display: grid;
   grid-template-areas:
     "god badge badge"
-    "heaven spacer star"
+    "heaven empty star"
     "earth special door";
-  grid-template-columns: 30px minmax(0, 1fr) 38px;
+  grid-template-columns: 30px 20px minmax(34px, 1fr);
   grid-template-rows: 24px 1fr 1fr;
   gap: 0 4px;
 }
@@ -447,6 +447,16 @@ input, select {
   align-self: end;
   justify-self: start;
   min-width: 0;
+}
+
+.empty-marker {
+  grid-area: empty;
+  align-self: center;
+  justify-self: center;
+  color: var(--blue);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .star {
@@ -564,13 +574,13 @@ input, select {
 
   .palace {
     padding: 5px 5px;
-    grid-template-columns: 24px minmax(0, 1fr) 32px;
+    grid-template-columns: 23px 17px minmax(28px, 1fr);
     grid-template-rows: 22px 1fr 1fr;
     gap: 0 2px;
   }
 
   .god {
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.05;
   }
 
@@ -580,14 +590,18 @@ input, select {
   }
 
   .stem-line {
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.08;
   }
 
   .star,
   .door {
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.02;
+  }
+
+  .empty-marker {
+    font-size: 14px;
   }
 
   .special-flag {
@@ -671,7 +685,7 @@ input, select {
 
   .palace {
     padding: 8px 10px;
-    grid-template-columns: 44px minmax(0, 1fr) 54px;
+    grid-template-columns: 44px 28px minmax(54px, 1fr);
   }
 
   .star {
