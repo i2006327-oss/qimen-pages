@@ -414,9 +414,13 @@
     return "";
   }
   function stemIssueItems(stems, branches, palace) {
-    return [...String(stems || "")].map((stem) => {
+    const text = String(stems || "");
+    const groupFlags = stemProblemFlags(text, branches, palace);
+    const groupBoth = groupFlags.includes("擊刑") && groupFlags.includes("入墓");
+    return [...text].map((stem) => {
       const flags = stemProblemFlags(stem, branches, palace);
-      return { stem, flags, className: issueClass(flags) };
+      const className = groupBoth && flags.length ? "issue-both" : issueClass(flags);
+      return { stem, flags, className };
     });
   }
   function palaceView(p, chart) {
