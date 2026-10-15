@@ -186,6 +186,86 @@ function selectStaticTab(id) {
   document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.id === id));
 }
 
+function renderStaticCases() {
+  const cases = window.QimenCases || [];
+  const filter = qs("caseCategory");
+  for (const category of new Set(cases.map((item) => item.category))) {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    filter.appendChild(option);
+  }
+  function renderList() {
+    const list = qs("caseList");
+    list.replaceChildren();
+    const visible = cases.filter((item) => !filter.value || item.category === filter.value);
+    qs("caseCount").textContent = `${visible.length} 個案例`;
+    for (const item of visible) {
+      const card = document.createElement("details");
+      card.className = "case-card";
+      const summary = document.createElement("summary");
+      const title = document.createElement("strong");
+      title.textContent = item.title;
+      const meta = document.createElement("span");
+      meta.className = "case-meta";
+      meta.textContent = `${item.datetime.replace("T", " ")}｜${item.category}｜${item.chartType}`;
+      const conclusion = document.createElement("span");
+      conclusion.textContent = item.summary;
+      summary.append(title, meta, conclusion);
+      card.appendChild(summary);
+      function section(label, text) {
+        const heading = document.createElement("h3");
+        heading.textContent = label;
+        const body = document.createElement("p");
+        body.textContent = text;
+        card.append(heading, body);
+      }
+      const material = item.material_chart;
+      section("問題", item.question);
+      section("教材盤面重點", `${material.dun}遁${material.ju}局｜四柱：${material.bazi.join("、")}｜旬空：${material.xun_empty}｜馬星：${material.horse_star}｜值符：${material.value_star}｜值使：${material.value_door}。${material.marks}`);
+      const palaceText = Object.entries(material.palaces).map(([number, palace]) => `${number}宮：${palace.god}、${palace.star}、${palace.door}｜天${palace.heaven_stem}／地${palace.earth_stem}`).join("\n");
+      section("教材各宮", palaceText);
+      section("授課老師判斷", item.judgment);
+      section("教材記載結果", item.result);
+      section("判讀理由", item.reasoning);
+      const supplement = document.createElement("aside");
+      supplement.className = "case-supplement";
+      supplement.setAttribute("aria-label", "補充解說，非教材原文");
+      const supplementLabel = document.createElement("strong");
+      supplementLabel.className = "case-supplement-label";
+      supplementLabel.textContent = "補充｜非教材原文";
+      const supplementText = document.createElement("p");
+      supplementText.textContent = item.supplement;
+      supplement.append(supplementLabel, supplementText);
+      card.appendChild(supplement);
+      section("引擎比對", `${item.engine_check.status}。${item.engine_check.differences.join("\n") || "所記錄的遁、局、四柱、旬空、馬星、值符值使及八宮門星神干一致。"}`);
+      const sources = [];
+      if (item.source_slides.length) sources.push(`上課投影片：${item.source_slides.join("、")}`);
+      for (const source of item.source_documents || []) sources.push(`${source.filename} 第 ${source.pages.join("、")} 頁`);
+      section("來源", `${sources.join("；")}。文字為摘要，未公開教材圖片。`);
+      const load = document.createElement("button");
+      load.type = "button";
+      load.className = "primary";
+      load.textContent = "載入此盤";
+      load.addEventListener("click", () => {
+        const values = item.datetime.split(/[-T:]/);
+        ["year", "month", "day", "hour", "minute"].forEach((key, i) => { qs(key).value = values[i]; });
+        qs("chartType").value = item.chartType;
+        qs("yuanMethod").value = "yinpan";
+        const topic = [...qs("topic").options].find((option) => option.value === item.category);
+        qs("topic").value = topic ? item.category : "一般";
+        syncChartTypeControls();
+        runStaticChart();
+        qs("chart").scrollIntoView({ block: "start" });
+      });
+      card.appendChild(load);
+      list.appendChild(card);
+    }
+  }
+  filter.addEventListener("change", renderList);
+  renderList();
+}
+
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => selectStaticTab(tab.dataset.tab));
 });
@@ -198,6 +278,7 @@ qs("chartType").addEventListener("change", () => {
   runStaticChart();
 });
 
+renderStaticCases();
 setStaticNow();
 syncChartTypeControls();
 runStaticChart();

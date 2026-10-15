@@ -11,7 +11,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=19">
+  <link rel="stylesheet" href="./styles.css?v=23">
 </head>
 <body>
   <header class="app-header">
@@ -115,6 +115,7 @@
       <button class="tab" data-tab="issues">統計</button>
       <button class="tab" data-tab="text">文字</button>
       <button class="tab" data-tab="number">數字</button>
+      <button class="tab" data-tab="cases">案例</button>
     </nav>
 
     <section id="chart" class="tab-panel active">
@@ -140,6 +141,21 @@
       <pre id="textChart" class="text-card"></pre>
     </section>
 
+    <section id="cases" class="tab-panel">
+      <div class="meta-card case-intro">
+        <h2>陰盤案例</h2>
+        <p>本頁以教材陰盤法整理：八宮排布不列中宮，五宮寄坤二宮；局數以年支數、農曆月、農曆日及時支數相加除九取餘，餘零作九。子起一、亥為十二，陰陽遁依節氣區分。</p>
+        <p>四害為空亡（旬內未配到的地支）、入墓（干氣入墓庫）、擊刑（六儀與宮支形成刑）、門迫（門五行剋宮）。五不遇時指時干剋日干且陰陽同性。伏吟為相應干、門或星回到本位，反吟為移至對宮；各層分別判定，勿混為整盤結論。</p>
+        <p>以下為匿名教材摘要。未交代的判讀不補作授課結論；「載入此盤」使用本站引擎，與教材的差異列於各案例。</p>
+      </div>
+      <div class="case-filter">
+        <label for="caseCategory">問題類別</label>
+        <select id="caseCategory"><option value="">全部</option></select>
+        <span id="caseCount" role="status"></span>
+      </div>
+      <div id="caseList" class="case-list"></div>
+    </section>
+
     <section id="number" class="tab-panel">
       <div id="numberCards" class="number-cards"></div>
       <pre id="numberText" class="text-card"></pre>
@@ -149,6 +165,7 @@
   <script src="./lunar.js?v=19"></script>
   <script src="./qimen_static_core.js?v=19"></script>
   <script src="./number_core.js?v=19"></script>
-  <script src="./qimen_static_app.js?v=19"></script>
+  <script src="./qimen_cases.js?v=23"></script>
+  <script src="./qimen_static_app.js?v=23"></script>
 </body>
 </html>
