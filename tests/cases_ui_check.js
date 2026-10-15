@@ -15,8 +15,8 @@ for (const filename of ['index.html', 'qimen_static.html']) {
   assert.ok(document.querySelectorAll('.tab').some((tab) => tab.dataset.tab === 'cases'));
   assert.ok(document.getElementById('cases'));
   const scripts = document.elements.filter((node) => node.tagName === 'script').map((node) => node.src);
-  assert.ok(scripts.indexOf('./qimen_cases.js?v=23') < scripts.indexOf('./qimen_static_app.js?v=23'));
-  assert.ok(scripts.includes('./qimen_cases.js?v=23'));
+  assert.ok(scripts.indexOf('./qimen_cases.js?v=26') < scripts.indexOf('./qimen_static_app.js?v=26'));
+  assert.ok(scripts.includes('./qimen_cases.js?v=26'));
   const context = vm.createContext({ document, console, navigator: {}, location: { protocol: 'file:' }, alert: (message) => { throw new Error(message); } });
   context.window = context;
   for (const src of scripts) vm.runInContext(fs.readFileSync(path.join(root, src.split('?')[0]), 'utf8'), context, { filename: src });
@@ -53,7 +53,7 @@ for (const filename of ['index.html', 'qimen_static.html']) {
 }
 const worker = vm.createContext({ URL, self: { registration: { scope: 'https://example.test/' }, addEventListener() {} } });
 vm.runInContext(fs.readFileSync(path.join(root, 'sw.js'), 'utf8'), worker);
-assert.equal(vm.runInContext('CACHE_NAME', worker), 'qimen-pwa-v25');
+assert.equal(vm.runInContext('CACHE_NAME', worker), 'qimen-pwa-v26');
 const assets = vm.runInContext('ASSETS', worker);
 for (const src of index.matchAll(/(?:src|href)="\.\/([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)) assert.ok(assets.includes(`https://example.test/${src[1]}`));
-console.log('PWA: v25、入口頁全部 JS／CSS 快取 URL PASS');
+console.log('PWA: v26、入口頁全部 JS／CSS 快取 URL PASS');

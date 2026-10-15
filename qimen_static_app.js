@@ -352,5 +352,15 @@ syncChartTypeControls();
 runStaticChart();
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
-  navigator.serviceWorker.register("./sw.js").catch(() => {});
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadController && !reloading) {
+      reloading = true;
+      location.reload();
+    }
+  });
+  navigator.serviceWorker.register("./sw.js")
+    .then((registration) => registration.update())
+    .catch(() => {});
 }
