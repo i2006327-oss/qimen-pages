@@ -5,6 +5,52 @@ const staticGridPositions = {
 };
 
 const qs = (id) => document.getElementById(id);
+let staticPalaceData = null;
+let staticSelectedPalace = null;
+const staticPalaceControls = new Map();
+
+function closeStaticPalace(restoreFocus = true) {
+  const previous = staticPalaceControls.get(staticSelectedPalace);
+  qs("palacePanel").hidden = true;
+  qs("palacePanelTitle").textContent = "";
+  qs("palacePanelText").textContent = "";
+  qs("palaceHostBtn").hidden = true;
+  staticSelectedPalace = null;
+  for (const { cell, button } of staticPalaceControls.values()) {
+    cell.classList.toggle("palace-selected", false);
+    button.setAttribute("aria-expanded", "false");
+  }
+  if (restoreFocus && previous) previous.button.focus();
+}
+
+function showStaticPalace(number) {
+  if (staticSelectedPalace === number) { closeStaticPalace(); return; }
+  const analysis = staticPalaceData?.palaces[String(number)]?.analysis;
+  if (!analysis) return;
+  closeStaticPalace(false);
+  staticSelectedPalace = number;
+  const { cell, button } = staticPalaceControls.get(number);
+  cell.classList.toggle("palace-selected", true);
+  button.setAttribute("aria-expanded", "true");
+  qs("palacePanelTitle").textContent = analysis.title + (analysis.labels.length ? `｜${analysis.labels.join("、")}` : "");
+  const lines = analysis.center ? [analysis.message] : [
+    "盤面", analysis.surface, "", "四害逐項",
+    ...(analysis.harms.length ? analysis.harms.flatMap((item) => [
+      `${item.name}｜成因：${item.cause}。`, `解說：${item.advice}`,
+    ]) : ["本宮無四害"]),
+    "", "伏吟反吟",
+    ...(analysis.resonance.length ? analysis.resonance.flatMap((item) => [
+      `${item.name}｜成因：${item.cause}。`, `解說：${item.advice}`,
+    ]) : ["本宮無伏吟反吟"]),
+    ...(analysis.five ? ["", analysis.five] : []),
+    "", "本宮小結", analysis.summary,
+  ];
+  qs("palacePanelText").textContent = lines.join("\n");
+  qs("palaceHostBtn").hidden = !analysis.center;
+  qs("palacePanel").hidden = false;
+  qs("palacePanel").focus({ preventScroll: true });
+  qs("palacePanel").scrollIntoView({ block: "nearest" });
+}
 
 function staticPad2(value) {
   return String(value).padStart(2, "0");
@@ -55,12 +101,12 @@ function renderStaticPalace(p) {
   const special = (p.specialFlags || []).map((flag) => `<span class="special-flag">${flag}</span>`).join("");
   const emptyMarker = (p.starFlags || []).length ? `<div class="empty-marker">&#9678;</div>` : "";
   div.className = palaceClass(p);
+  div.dataset.palace = String(p.number);
   div.style.gridRow = String(row + 1);
   div.style.gridColumn = String(col + 1);
   div.title = `${p.name}｜${p.direction}｜${p.god || ""}｜${p.star || ""}｜${p.door || ""}`;
   div.innerHTML = `
     <div class="god">${shortGods[p.god] || p.god || ""}</div>
-    <div class="palace-show">顯示</div>
     <div class="stem-line heaven-stem">${stemItemsHtml(p.heavenStemItems, p.heavenStem, p.heavenClass)}</div>
     <div class="stem-line earth-stem">${stemItemsHtml(p.earthStemItems, p.earthStem, p.earthClass)}</div>
     <div class="star ${p.starClass || ""}">${shortStars[p.star] || p.star || ""}</div>
@@ -68,10 +114,23 @@ function renderStaticPalace(p) {
     ${emptyMarker}
     <div class="palace-specials">${special}</div>
   `;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "palace-show";
+  button.textContent = "顯示";
+  button.setAttribute("aria-label", `顯示${p.number === 5 ? "中五宮寄宮說明" : p.name + "解析"}`);
+  button.setAttribute("aria-controls", "palacePanel");
+  button.setAttribute("aria-expanded", "false");
+  button.addEventListener("click", () => showStaticPalace(p.number));
+  div.appendChild(button);
+  staticPalaceControls.set(p.number, { cell: div, button });
   return div;
 }
 
 function renderStaticChart(data) {
+  closeStaticPalace(false);
+  staticPalaceControls.clear();
+  staticPalaceData = data;
   qs("headerText").textContent = data.header;
   qs("summaryText").textContent = data.summary;
   qs("explainText").textContent = data.explanation;
@@ -118,6 +177,7 @@ function renderStaticChart(data) {
 }
 
 function runStaticChart() {
+  closeStaticPalace(false);
   try {
     const chartType = qs("chartType").value;
     const chart = QimenStatic.buildChart({
@@ -273,6 +333,14 @@ document.querySelectorAll(".tab").forEach((tab) => {
 qs("nowBtn").addEventListener("click", setStaticNow);
 qs("chartBtn").addEventListener("click", runStaticChart);
 qs("numberBtn").addEventListener("click", runStaticNumber);
+qs("palaceCloseBtn").addEventListener("click", () => closeStaticPalace());
+qs("palaceHostBtn").addEventListener("click", () => showStaticPalace(2));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && staticSelectedPalace !== null) {
+    event.preventDefault();
+    closeStaticPalace();
+  }
+});
 qs("chartType").addEventListener("change", () => {
   syncChartTypeControls();
   runStaticChart();

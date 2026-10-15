@@ -430,6 +430,9 @@ input, select {
 }
 
 .palace-show {
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
   grid-area: badge;
   justify-self: end;
   align-self: start;
@@ -440,6 +443,34 @@ input, select {
   font-weight: 800;
   line-height: 1.2;
 }
+
+.palace.palace-selected {
+  outline: 3px solid var(--blue);
+  outline-offset: -3px;
+}
+
+.palace-show:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.palace-panel {
+  margin-top: 12px;
+  padding: 14px;
+  min-width: 0;
+  max-width: 100%;
+  background: var(--paper);
+  border: 2px solid var(--blue);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.palace-panel[hidden], .palace-panel button[hidden] { display: none; }
+.palace-panel-heading { display: flex; align-items: start; gap: 10px; justify-content: space-between; }
+.palace-panel h2 { margin: 0; font-size: 17px; line-height: 1.5; }
+.palace-panel-heading button { flex-shrink: 0; }
+.palace-panel pre { margin: 14px 0 0; font: inherit; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.palace-panel:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .stem-line {
   align-self: end;

@@ -447,6 +447,7 @@
       starClass: p.star_flags.includes("空亡") ? "issue-empty" : "",
       doorClass: p.door_flags.includes("門迫") ? "issue-strike" : "",
       borderClass: "",
+      analysis: palaceAnalysis(p, chart),
     };
   }
   function issueTable(chart) {
@@ -460,6 +461,7 @@
     ];
     for (const palace of [4, 9, 2, 3, 5, 7, 8, 1, 6]) {
       const p = chart.palaces[palace];
+      if (!isExplanationPalace(p)) continue;
       const longevity = p.longevity.map(([b, s]) => `${b}${s}`).concat(p.has_horse ? ["馬"] : []).join("、") || "-";
       lines.push(`${p.name}｜${longevity}｜${p.heaven_flags.join("、") || "-"}｜${p.earth_flags.join("、") || "-"}｜${p.star_flags.join("、") || "-"}｜${p.door_flags.join("、") || "-"}｜${p.resonance_flags.join("、") || "-"}｜${(p.special_flags || []).join("、") || "-"}`);
     }
@@ -544,13 +546,79 @@
     七宮四害: "扣除第一用神後，其餘七宮四害多，代表外部阻力密度高",
     八宮四害: "外圈八宮四害多，代表全局阻力密度高，重大決策要先化解",
   };
-  function hasThreeWonder(p) {
-    return [...((p.heaven_stem || "") + (p.earth_stem || ""))].some((s) => ["乙", "丙", "丁"].includes(s));
+  function isExplanationPalace(p) {
+    return Boolean(p && p.number !== 5 && p.door && p.star && p.god);
+  }
+  function explanationPalaces(chart) {
+    return Object.values(chart.palaces).filter(isExplanationPalace);
+  }
+  function explanationPalace(chart, number) {
+    const p = chart.palaces[displayPalaceNumber(Number(number))];
+    return isExplanationPalace(p) ? p : null;
   }
   function flagsText(p) {
     const flags = [...(p.flags || []), ...(p.special_flags || [])];
     if (!flags.length) return "這宮沒有明顯四害，事情相對乾淨。";
     return flags.map((f) => FLAG_ADVICE[f] || f).join("；") + "。";
+  }
+  // 只解釋 detectPalaceMarks 已判定的項目，沿用同一組對照表，不另立四害規則。
+  function palaceAnalysis(p, chart) {
+    if (p.number === 5) return {
+      title: "中五宮", labels: [], center: true,
+      message: "陰盤法中宮不列，五寄坤二宮",
+    };
+    const labels = [];
+    if (p.number === displayPalaceNumber(chart.first_yongshen_palace)) labels.push("第一用神");
+    if (p.number === displayPalaceNumber(chart.second_yongshen_palace)) labels.push("第二用神");
+    if (p.god === "值符") labels.push("值符宮");
+    if (p.number === displayPalaceNumber(chart.value_door_palace)) labels.push("值使宮");
+    if (p.has_horse) labels.push("馬星宮");
+    const harms = FOUR_HARMS.filter((flag) => p.flags.includes(flag)).map((flag) => {
+      const causes = [];
+      if (flag === "空亡") {
+        const empty = p.branches.filter((b) => chart.xun_empty.includes(b));
+        causes.push(`本宮地支${empty.join("、")}為${chart.xun}旬空（${chart.xun_empty}）`);
+      }
+      if (flag === "入墓" || flag === "擊刑") {
+        for (const [layer, stems, flags] of [["天盤", p.heaven_stem, p.heaven_flags], ["地盤", p.earth_stem, p.earth_flags]]) {
+          if (!flags.includes(flag)) continue;
+          for (const stem of stemSet(stems)) {
+            if (flag === "入墓" && p.branches.includes(TOMB_BRANCH_BY_STEM[stem])) {
+              causes.push(`${layer}${stem}的墓在${TOMB_BRANCH_BY_STEM[stem]}，${TOMB_BRANCH_BY_STEM[stem]}在本宮`);
+            }
+            if (flag === "擊刑" && STRIKE_PALACE_BY_STEM[stem] === p.number) {
+              causes.push(`${layer}${stem}落${p.number}宮（${Object.keys(STRIKE_PALACE_BY_STEM).filter((s) => STRIKE_PALACE_BY_STEM[s] === p.number).join("、")}在${p.name}為擊刑）`);
+            }
+          }
+        }
+      }
+      if (flag === "門迫") causes.push(`${p.door}（${DOOR_ELEMENTS[p.door]}）剋本宮（${PALACE_ELEMENTS[p.number]}）`);
+      return { name: flag, cause: causes.join("；"), advice: FLAG_ADVICE[flag] + "。" };
+    });
+    const resonance = p.resonance_flags.map((flag) => {
+      const reverse = flag.endsWith("反吟");
+      const target = reverse ? OPPOSITE_PALACE[p.number] : p.number;
+      const location = reverse ? `對宮${PALACE_NAMES[target]}` : `本宮${p.name}`;
+      let cause;
+      if (flag.startsWith("干")) {
+        const earth = chart.palaces[target].earth_stem;
+        const shared = [...stemSet(p.heaven_stem)].filter((s) => stemSet(earth).has(s));
+        cause = `天盤${shared.join("、")}與${location}地盤${earth}同干`;
+      } else if (flag.startsWith("門")) {
+        cause = `${p.door}${reverse ? "為" : "回到"}${location}本位門（${BASE_DOORS[target]}）`;
+      } else {
+        cause = `${p.star}${reverse ? "為" : "回到"}${location}本位星（${BASE_STARS[target]}）`;
+      }
+      return { name: flag, cause, advice: FLAG_ADVICE[flag] + "。" };
+    });
+    const five = p.number === displayPalaceNumber(chart.second_yongshen_palace) && fiveNotMeet(chart.bazi[2], chart.bazi[3])
+      ? `五不遇時：${chart.bazi[2]}日遇${chart.bazi[3]}時，時干${chart.bazi[3][0]}剋日干${chart.bazi[2][0]}。` : "";
+    return {
+      title: `${p.name}・${p.direction}`, labels, center: false,
+      surface: `八神：${p.god}｜九星：${p.star}｜八門：${p.door}\n天盤干：${p.heaven_stem}｜地盤干：${p.earth_stem}\n地支：${p.branches.join("、")}｜十二長生（用干${chart.longevity_stem}）：${p.longevity.map(([b, s]) => `${b}${s}`).join("、")}`,
+      harms, resonance, five,
+      summary: `${DOOR_FEEL[p.door]}${stripEnd(STAR_FEEL[p.star])}；${GOD_FEEL[p.god]}${flagsText(p)}`,
+    };
   }
   function stripEnd(text) {
     return String(text || "").replace(/[。；，\s]+$/g, "");
@@ -573,27 +641,27 @@
     return `${p.name}${PALACE_DIRECTIONS[p.number]}方：${stemImageText(stems)}；${p.god || "無神"}看人事氣氛，${p.star || "無星"}看事件特質，${p.door || "無門"}看現場狀態；十二長生為${longevity}${p.has_horse ? "，兼帶馬星移動象" : ""}。`;
   }
   function findStemPalaces(chart, stem) {
-    return Object.values(chart.palaces).filter((p) => `${p.heaven_stem || ""}${p.earth_stem || ""}`.includes(stem));
+    return explanationPalaces(chart).filter((p) => `${p.heaven_stem || ""}${p.earth_stem || ""}`.includes(stem));
   }
   function caseFocusPalaces(chart, topic, first, second, wealth, relationship, career, health) {
     const out = [];
-    const add = (p) => { if (p && !out.some((x) => x.number === p.number)) out.push(p); };
+    const add = (p) => { if (isExplanationPalace(p) && !out.some((x) => x.number === p.number)) out.push(p); };
     add(first);
     add(second);
-    if (topic === "財運" || topic === "投資") add(wealth);
-    if (topic === "感情" || topic === "合作人際") add(relationship);
-    if (topic === "事業" || topic === "店面客源") add(career);
-    if (topic === "健康") add(health);
+    if (topic === "財運" || topic === "投資") wealth.forEach(add);
+    if (topic === "感情" || topic === "合作人際") relationship.forEach(add);
+    if (topic === "事業" || topic === "店面客源") career.forEach(add);
+    if (topic === "健康") health.forEach(add);
     if (topic === "失物") {
       findStemPalaces(chart, "丁").forEach(add);
-      add(chart.palaces[chart.value_door_palace]);
+      add(explanationPalace(chart, chart.value_door_palace));
     }
     return out.slice(0, 5);
   }
   function caseStyleLines(chart, options, first, second, wealth, relationship, career, health) {
     const topic = options.topic || "一般";
     const focus = caseFocusPalaces(chart, topic, first, second, wealth, relationship, career, health);
-    const resonance = Object.values(chart.palaces).flatMap((p) => p.resonance_flags || []);
+    const resonance = explanationPalaces(chart).flatMap((p) => p.resonance_flags || []);
     const hasReverse = resonance.some((f) => f.endsWith("反吟"));
     const hasFuyin = resonance.some((f) => f.endsWith("伏吟"));
     const posture = hasReverse
@@ -621,34 +689,30 @@
     lines.push("結論寫法：先說阻力在哪，再說哪個宮可用，最後給可執行動作；不要只說吉凶。");
     return lines;
   }
-  function topicScore(p, topic) {
-    let score = palaceScore(p);
-    if (topic === "財運") {
-      if (["生門", "開門", "休門"].includes(p.door)) score += 3;
-      if (["天心星", "天任星", "天輔星"].includes(p.star)) score += 2;
-      if (["值符", "九地", "九天", "太陰"].includes(p.god)) score += 1;
-    } else if (topic === "感情") {
-      if (p.god === "六合") score += 4;
-      if (["休門", "開門", "生門", "景門"].includes(p.door)) score += 2;
-      if (hasThreeWonder(p)) score += 1;
-    } else if (topic === "事業") {
-      if (["開門", "景門", "生門"].includes(p.door)) score += 3;
-      if (["天心星", "天輔星", "天任星"].includes(p.star)) score += 2;
-      if (["值符", "九天"].includes(p.god)) score += 2;
-    } else if (topic === "健康") {
-      if (p.star === "天芮星") score += 4;
-      if (["死門", "傷門", "驚門"].includes(p.door)) score += 2;
-      if (["白虎", "螣蛇"].includes(p.god)) score += 2;
-      score += (p.flags || []).length;
-    }
-    return score;
+  // 教材：〈奇門遁甲符號-關於人格特質.pdf〉第1頁生門主財利、開門主事業，
+  // 第2頁天芮為病星，第4頁六合主婚姻和合；〈123.pdf〉第9頁乙女方、庚男方。
+  // 58張投影片與〈繁體奇門數字.pdf〉未見要求通用感情另取丁壬或健康必取死門；
+  // 不把個別案例或其他象意擴為固定用神。乙庚未指定天地盤，沿用日/時干的天盤取法。
+  const TOPIC_YONGSHEN = {
+    財運: [["door", "生門"]],
+    感情: [["god", "六合"], ["heaven_stem", "乙"], ["heaven_stem", "庚"]],
+    事業: [["door", "開門"]],
+    健康: [["star", "天芮星"]],
+  };
+  function topicPalaces(chart, topic) {
+    return TOPIC_YONGSHEN[topic].map(([field, symbol]) => {
+      const found = Object.values(chart.palaces).find((p) =>
+        (p.number === 5 || isExplanationPalace(p)) &&
+        (field === "heaven_stem" ? String(p[field] || "").includes(symbol) : p[field] === symbol));
+      return { symbol, palace: found ? explanationPalace(chart, found.number) : null };
+    });
   }
-  function bestTopicPalace(chart, topic) {
-    const palaces = Object.values(chart.palaces);
-    return palaces.sort((a, b) => topicScore(b, topic) - topicScore(a, topic))[0];
+  function topicLines(chart, topic) {
+    return topicPalaces(chart, topic).map(({ symbol, palace }) =>
+      `${topic}：${palace ? topicLine(topic, palace, symbol) : `${topic}用神（${symbol}）未見有效落宮，暫不解說。`}`);
   }
-  function topicLine(topic, p) {
-    const base = `${topic}看${p.name}，見${p.god}、${p.star}、${p.door}。`;
+  function topicLine(topic, p, symbol) {
+    const base = `${topic}看${p.name}（${PALACE_DIRECTIONS[p.number]}），見${p.god}、${p.star}、${p.door}。用神：${symbol}。`;
     if (topic === "財運") return `${base}${p.door === "生門" ? "有資源與收入訊號，" : ""}${p.star === "天心星" ? "偏向用專業、技術、判斷力換錢，" : ""}${flagsText(p)}`;
     if (topic === "感情") return `${base}${p.god === "六合" ? "有和合、人緣或媒合訊號，" : ""}${["玄武", "螣蛇"].includes(p.god) ? "但曖昧、猜測與話沒講清楚會變成問題，" : ""}${flagsText(p)}`;
     if (topic === "事業") return `${base}${["開門", "景門", "生門"].includes(p.door) ? "有對外開展、曝光或資源機會，" : ""}${flagsText(p)}`;
@@ -656,30 +720,30 @@
     return `${base}${flagsText(p)}`;
   }
   function explain(chart, options = {}) {
-    const first = chart.palaces[chart.first_yongshen_palace];
-    const second = chart.palaces[chart.second_yongshen_palace];
-    const good = Object.values(chart.palaces).sort((a, b) => palaceScore(b) - palaceScore(a)).slice(0, 4);
-    const risks = Object.values(chart.palaces).filter((p) => p.flags.length || (p.special_flags || []).length).slice(0, 5);
-    const wealth = bestTopicPalace(chart, "財運");
-    const relationship = bestTopicPalace(chart, "感情");
-    const career = bestTopicPalace(chart, "事業");
-    const health = bestTopicPalace(chart, "健康");
+    const first = explanationPalace(chart, chart.first_yongshen_palace);
+    const second = explanationPalace(chart, chart.second_yongshen_palace);
+    const good = explanationPalaces(chart).sort((a, b) => palaceScore(b) - palaceScore(a)).slice(0, 4);
+    const risks = explanationPalaces(chart).filter((p) => p.flags.length || (p.special_flags || []).length).slice(0, 5);
+    const [wealth, relationship, career, health] = ["財運", "感情", "事業", "健康"].map((t) =>
+      topicPalaces(chart, t).map((entry) => entry.palace).filter(Boolean));
     const chartType = options.chartType || "終身盤（出生盤）";
     const topic = options.topic || "一般";
     const isKe = String(chartType).includes("刻盤");
     const isPrediction = isKe || String(chartType).includes("時盤") || String(chartType).includes("預測");
     const ke = keInfo(chart.solar, chart.bazi[3][1]);
     const condition = isPrediction ? `${isKe ? `刻盤：${ke.label}。` : ""}問事條件：${options.presence || "人在現場"}｜${options.askerGender || "男問"}｜${options.divinerGender || "男預測師"}` : "終身盤：以出生時間定盤，不使用人在/不在場與問事者條件。";
-    const relationText = relation(first, second);
-    const firstHasRisk = first.flags && first.flags.length;
-    const secondHasRisk = second.flags && second.flags.length;
+    const relationText = first && second ? relation(first, second) : "用神未見有效落宮，暫不判斷主客關係。";
+    const firstHasRisk = first && first.flags && first.flags.length;
+    const secondHasRisk = second && second.flags && second.flags.length;
     const headline = firstHasRisk && secondHasRisk
       ? "這盤不是缺機會，而是自己狀態與事情本體都帶阻力，先釐清條件再出手。"
       : firstHasRisk
         ? "這盤先處理自己的狀態；你一穩，事情才容易順。"
         : secondHasRisk
           ? "這盤事情本體有卡點，不宜只靠熱情推進，要先拆風險。"
-          : "這盤主客相對乾淨，可以看準方向後主動布局。";
+          : !first || !second
+            ? "用神落宮資料不完整，先確認盤面再判斷。"
+            : "這盤主客相對乾淨，可以看準方向後主動布局。";
     const lines = [
       "解說盤：",
       `排盤類型：${chartType}`,
@@ -689,15 +753,12 @@
       `主客關係：${relationText}`,
       "",
       "二、用神判斷",
-      `第一用神（${isPrediction ? "問測者/日干" : "命主/日干"}）：落${first.name}，${palaceTone(first)}。${flagsText(first)}`,
-      `第二用神（${isPrediction ? "所問事/時干" : "行為反應/時干"}）：落${second.name}，${palaceTone(second)}。${flagsText(second)}`,
+      `第一用神（${isPrediction ? "問測者/日干" : "命主/日干"}）：${first ? `落${first.name}，${palaceTone(first)}。${flagsText(first)}` : "未見有效落宮，暫不解說。"}`,
+      `第二用神（${isPrediction ? "所問事/時干" : "行為反應/時干"}）：${second ? `落${second.name}，${palaceTone(second)}。${flagsText(second)}` : "未見有效落宮，暫不解說。"}`,
       "",
       "三、各項運勢",
       `本次主題：${topic}`,
-      `財運：${topicLine("財運", wealth)}`,
-      `感情：${topicLine("感情", relationship)}`,
-      `事業：${topicLine("事業", career)}`,
-      `健康：${topicLine("健康", health)}`,
+      ...["財運", "感情", "事業", "健康"].flatMap((t) => topicLines(chart, t)),
       "",
       "四、可用宮位",
       ...good.map((p) => `- ${p.name}：${p.god}、${p.star}、${p.door}。適合用「${stripEnd(DOOR_FEEL[p.door] || "依盤面取用")}」的方式處理。${flagsText(p)}`),
@@ -718,7 +779,7 @@
     return lines.join("\n");
   }
   function toResponse(chart, options = {}) {
-    const resonance = ["干伏吟", "門伏吟", "星伏吟", "干反吟", "門反吟", "星反吟"].filter((flag) => Object.values(chart.palaces).some((p) => p.flags.includes(flag))).join("、") || "無";
+    const resonance = ["干伏吟", "門伏吟", "星伏吟", "干反吟", "門反吟", "星反吟"].filter((flag) => explanationPalaces(chart).some((p) => p.flags.includes(flag))).join("、") || "無";
     const resonanceFlags = resonance === "無" ? [] : resonance.split("、");
     const palaces = {};
     Object.entries(chart.palaces).forEach(([n, p]) => { palaces[n] = palaceView(p, chart); });
