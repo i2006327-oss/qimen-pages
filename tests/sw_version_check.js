@@ -67,7 +67,7 @@ async function request(pathname, mode = 'cors') {
   await lifecycle('activate');
   assert.ok(claimed);
   assert.deepEqual(deleted, ['qimen-pwa-v23']);
-  for (const [pathname, mode] of [['index.html', 'navigate'], ['', 'navigate'], ['qimen_static_app.js?v=26', 'cors'], ['styles.css?v=26', 'cors']]) {
+  for (const [pathname, mode] of [['index.html', 'navigate'], ['', 'navigate'], ['qimen_static_app.js?v=27', 'cors'], ['styles.css?v=27', 'cors']]) {
     offline = false; status = 200;
     const key = new URL(pathname, scope).href;
     stored.set(key, new Response('old'));

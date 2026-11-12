@@ -24,7 +24,7 @@ for (const [index, date] of dates.entries()) {
     assert.doesNotMatch(JSON.stringify(response), /中五宮：、、/);
     assert.doesNotMatch(response.explanation + response.issueTable, /中五宮/);
     const fortune = section(response.explanation, '三、各項運勢', '四、可用宮位');
-    assert.equal(fortune.split('\n').filter((line) => /^(財運|感情|事業|健康)：/.test(line)).length, 6);
+    assert.equal(fortune.split('\n').filter((line) => /^(財運|感情|事業|健康)：/.test(line)).length, 4);
     for (const [name, field, symbol] of rules) {
       const p = Object.values(chart.palaces).find((p) => field === 'heaven_stem'
         ? p[field].includes(symbol) : p[field] === symbol);
@@ -77,5 +77,5 @@ for (const field of ['door', 'star', 'god']) {
   assert.doesNotMatch(response.issueTable, /^離九宮｜/m);
   assert.match(response.explanation, /財運用神（生門）未見有效落宮/);
 }
-assert.match(fs.readFileSync(path.join(root, 'sw.js'), 'utf8'), /CACHE_NAME = "qimen-pwa-v26"/);
-console.log('缺門／星／神排除、用神缺失不評分替補、快取 v26 PASS');
+assert.match(fs.readFileSync(path.join(root, 'sw.js'), 'utf8'), /CACHE_NAME = "qimen-pwa-v28"/);
+console.log('缺門／星／神排除、用神缺失不評分替補、快取 v28 PASS');

@@ -11,7 +11,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=26">
+  <link rel="stylesheet" href="./styles.css?v=28">
 </head>
 <body>
   <header class="app-header">
@@ -23,7 +23,8 @@
   </header>
 
   <main>
-    <section class="panel controls">
+    <details id="chartSettings" class="panel controls" open>
+      <summary>排盤設定</summary>
       <div class="form-grid">
         <label>年<input id="year" inputmode="numeric"></label>
         <label>月<input id="month" inputmode="numeric"></label>
@@ -81,42 +82,31 @@
         </label>
       </div>
       <button id="chartBtn" class="primary" type="button">排盤</button>
-    </section>
-
-    <section class="panel controls plate-controls">
-      <div class="section-title">數字奇門</div>
-      <div class="form-stack plate-stack">
-        <label>分析類型
-          <select id="numberKind">
-            <option>手機號碼</option>
-            <option>銀行帳戶</option>
-            <option>車牌</option>
-          </select>
-        </label>
-        <label>號碼
-          <input id="numberInput" autocomplete="off" autocapitalize="characters" placeholder="手機、帳戶或 ABC-1234">
-        </label>
-        <label>性別
-          <select id="numberGender">
-            <option>男</option>
-            <option>女</option>
-          </select>
-        </label>
-        <label>流年
-          <input id="numberYear" inputmode="numeric">
-        </label>
-      </div>
-      <button id="numberBtn" class="primary" type="button">分析數字</button>
-    </section>
+    </details>
 
     <nav class="tabs" aria-label="結果切換">
       <button class="tab active" data-tab="chart">圖形盤</button>
+      <button class="tab" data-tab="daily">擇時</button>
       <button class="tab" data-tab="explain">解說</button>
       <button class="tab" data-tab="issues">統計</button>
       <button class="tab" data-tab="text">文字</button>
       <button class="tab" data-tab="number">數字</button>
       <button class="tab" data-tab="cases">案例</button>
     </nav>
+
+    <section id="daily" class="tab-panel">
+      <div class="panel daily-intro">
+        <h2>一天各時辰求財取象比較</h2>
+        <label>日期<input id="dailyDate" type="date"></label>
+        <button id="dailyCompare" class="primary" type="button">比較今天各時辰</button>
+        <p>評等規則：五不遇時，或全盤同時有干、門、星三伏吟或三反吟為「避開」。其餘所有主宮無四害為「上」，只有一個主宮有四害為「中」，其他為「下」。同一宮有多個用神時只計一個主宮，日干為戊時本人與本金同宮。全盤有伏吟或反吟但未達避開條件，降一級（上→中、中→下），註記「有伏吟/反吟，宜守不宜加碼」。主宮四害總數依各主宮四害種類計算。推薦依等級、主宮四害總數較少、全盤八宮四害數較少、時間較早依序排列，第二名為次選。</p>
+        <label class="daily-remember"><input id="dailyRemember" type="checkbox">記住我的位置</label>
+        <button id="dailyClearLocation" type="button">清除記住的位置</button>
+        <p id="dailyLocationStatus" role="status"></p>
+      </div>
+      <div id="dailyResults" class="daily-results"></div>
+      <p class="daily-notice">此為民俗取象參考。本專案以 5,990 期歷史資料檢驗，盤面標記與開獎結果無關，時辰與方位不改變中獎機率；請依原定預算購買，不要因取象加碼。</p>
+    </section>
 
     <section id="chart" class="tab-panel active">
       <div class="meta-card">
@@ -165,16 +155,42 @@
     </section>
 
     <section id="number" class="tab-panel">
+      <section class="panel controls plate-controls">
+        <div class="section-title">數字奇門</div>
+        <div class="form-stack plate-stack">
+          <label>分析類型
+            <select id="numberKind">
+              <option>手機號碼</option>
+              <option>銀行帳戶</option>
+              <option>車牌</option>
+            </select>
+          </label>
+          <label>號碼
+            <input id="numberInput" autocomplete="off" autocapitalize="characters" placeholder="手機、帳戶或 ABC-1234">
+          </label>
+          <label>性別
+            <select id="numberGender">
+              <option>男</option>
+              <option>女</option>
+            </select>
+          </label>
+          <label>流年
+            <input id="numberYear" inputmode="numeric">
+          </label>
+        </div>
+        <button id="numberBtn" class="primary" type="button">分析數字</button>
+      </section>
       <div id="numberCards" class="number-cards"></div>
       <pre id="numberText" class="text-card"></pre>
     </section>
   </main>
-  <footer style="text-align: center; padding: 0.5rem"><small>v26</small></footer>
+  <footer style="text-align: center; padding: 0.5rem"><small>v28</small></footer>
 
-  <script src="./lunar.js?v=26"></script>
-  <script src="./qimen_static_core.js?v=26"></script>
-  <script src="./number_core.js?v=26"></script>
-  <script src="./qimen_cases.js?v=26"></script>
-  <script src="./qimen_static_app.js?v=26"></script>
+  <script src="./lunar.js?v=28"></script>
+  <script src="./qimen_static_core.js?v=28"></script>
+  <script src="./number_core.js?v=28"></script>
+  <script src="./qimen_cases.js?v=28"></script>
+  <script src="./qimen_static_app.js?v=28"></script>
+  <script src="./qimen_daily.js?v=28"></script>
 </body>
 </html>

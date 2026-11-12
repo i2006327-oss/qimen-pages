@@ -151,7 +151,7 @@ input, select {
   top: 61px;
   z-index: 19;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
   padding: 10px 0;
   background: var(--bg);
@@ -750,4 +750,25 @@ input, select {
     font-size: 12px;
     white-space: nowrap;
   }
+}
+
+.daily-intro, .daily-card { padding: 14px; min-width: 0; }
+.daily-intro h2 { margin: 0 0 12px; font-size: 19px; }
+.daily-intro p, .daily-card p, .daily-notice { color: var(--ink); font-size: 14px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.daily-intro p { margin: 12px 0; }
+.daily-remember { display: flex; align-items: center; margin: 12px 0; }
+.daily-remember input { width: auto; min-height: 0; }
+.daily-results { display: grid; gap: 10px; margin-top: 10px; }
+.daily-card { background: var(--paper); border: 1px solid #d3cabc; border-radius: 8px; }
+.daily-card h3 { margin: 0 0 8px; font-size: 16px; overflow-wrap: anywhere; }
+.daily-card button { margin: 10px 8px 0 0; }
+.daily-avoid { background: #fff0eb; border-color: #b83d28; }
+.daily-notice { margin: 16px 0; font-weight: 700; }
+@media (max-width: 520px) { .tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+#chartSettings > summary { cursor: pointer; font-size: 15px; font-weight: 900; }
+#chartSettings[open] > summary { margin-bottom: 10px; }
+@media (max-width: 640px) {
+  .app-header { position: static; }
+  .tabs { top: 0; z-index: 20; border-bottom: 1px solid #d8d0c2; }
 }

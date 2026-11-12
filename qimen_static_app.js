@@ -176,7 +176,7 @@ function renderStaticChart(data) {
   }
 }
 
-function runStaticChart() {
+function runStaticChart(selectTab = true) {
   closeStaticPalace(false);
   try {
     const chartType = qs("chartType").value;
@@ -195,7 +195,7 @@ function runStaticChart() {
       askerGender: qs("askerGender").value,
       divinerGender: qs("divinerGender").value,
     }));
-    selectStaticTab("chart");
+    if (selectTab) selectStaticTab("chart");
   } catch (error) {
     alert(error.message);
   }
@@ -242,6 +242,8 @@ function runStaticNumber() {
 }
 
 function selectStaticTab(id) {
+  if (id === "daily" || id === "cases") qs("chartSettings").open = false;
+  try { localStorage.setItem("qimenLastTab", id); } catch (error) { /* ???????????? */ }
   document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === id));
   document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.id === id));
 }
@@ -330,8 +332,11 @@ document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => selectStaticTab(tab.dataset.tab));
 });
 
-qs("nowBtn").addEventListener("click", setStaticNow);
-qs("chartBtn").addEventListener("click", runStaticChart);
+qs("nowBtn").addEventListener("click", () => {
+  setStaticNow();
+  if (qs("chartType").value.includes("終身")) { qs("chartType").value = "時盤（預測盤）"; syncChartTypeControls(); }
+});
+qs("chartBtn").addEventListener("click", () => runStaticChart());
 qs("numberBtn").addEventListener("click", runStaticNumber);
 qs("palaceCloseBtn").addEventListener("click", () => closeStaticPalace());
 qs("palaceHostBtn").addEventListener("click", () => showStaticPalace(2));
@@ -349,7 +354,10 @@ qs("chartType").addEventListener("change", () => {
 renderStaticCases();
 setStaticNow();
 syncChartTypeControls();
-runStaticChart();
+runStaticChart(false);
+let staticLastTab = null;
+try { staticLastTab = localStorage.getItem("qimenLastTab"); } catch (error) { /* ?????????????? */ }
+if (Array.from(document.querySelectorAll(".tab")).some((tab) => tab.dataset.tab === staticLastTab)) selectStaticTab(staticLastTab);
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
   const hadController = Boolean(navigator.serviceWorker.controller);

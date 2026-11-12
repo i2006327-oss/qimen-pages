@@ -556,8 +556,8 @@
     const p = chart.palaces[displayPalaceNumber(Number(number))];
     return isExplanationPalace(p) ? p : null;
   }
-  function flagsText(p) {
-    const flags = [...(p.flags || []), ...(p.special_flags || [])];
+  function flagsText(p, excluded = []) {
+    const flags = [...(p.flags || []), ...(p.special_flags || [])].filter((flag) => !excluded.includes(flag));
     if (!flags.length) return "這宮沒有明顯四害，事情相對乾淨。";
     return flags.map((f) => FLAG_ADVICE[f] || f).join("；") + "。";
   }
@@ -658,7 +658,7 @@
     }
     return out.slice(0, 5);
   }
-  function caseStyleLines(chart, options, first, second, wealth, relationship, career, health) {
+  function caseStyleLines(chart, options, first, second, wealth, relationship, career, health, globalResonance) {
     const topic = options.topic || "一般";
     const focus = caseFocusPalaces(chart, topic, first, second, wealth, relationship, career, health);
     const resonance = explanationPalaces(chart).flatMap((p) => p.resonance_flags || []);
@@ -672,9 +672,9 @@
     const lines = [
       "八、案例式斷盤",
       `主題：${topic}。斷法：${TOPIC_METHODS[topic] || TOPIC_METHODS.一般}`,
-      `盤勢：${posture}`,
+      `盤勢：${posture}${globalResonance.map((flag) => FLAG_ADVICE[flag] + "。").join("")}`,
       "取象：先把用神落宮的方位、神、星、門、天干與四害對照現實；能對上現場，就優先採用該宮判斷。",
-      ...focus.map((p) => `- ${palaceObjectLine(p)} ${flagsText(p)}`),
+      ...focus.map((p) => `- ${palaceObjectLine(p)} ${flagsText(p, globalResonance)}`),
     ];
     if (topic === "失物") {
       const ding = findStemPalaces(chart, "丁").map((p) => p.name).join("、") || "未見丁";
@@ -707,19 +707,20 @@
       return { symbol, palace: found ? explanationPalace(chart, found.number) : null };
     });
   }
-  function topicLines(chart, topic) {
-    return topicPalaces(chart, topic).map(({ symbol, palace }) =>
-      `${topic}：${palace ? topicLine(topic, palace, symbol) : `${topic}用神（${symbol}）未見有效落宮，暫不解說。`}`);
+  function topicLines(chart, topic, globalResonance) {
+    return [`${topic}：${topicPalaces(chart, topic).map(({ symbol, palace }) =>
+      palace ? topicLine(topic, palace, symbol, globalResonance) : `${topic}用神（${symbol}）未見有效落宮，暫不解說。`).join(" ")}`];
   }
-  function topicLine(topic, p, symbol) {
+  function topicLine(topic, p, symbol, globalResonance) {
     const base = `${topic}看${p.name}（${PALACE_DIRECTIONS[p.number]}），見${p.god}、${p.star}、${p.door}。用神：${symbol}。`;
-    if (topic === "財運") return `${base}${p.door === "生門" ? "有資源與收入訊號，" : ""}${p.star === "天心星" ? "偏向用專業、技術、判斷力換錢，" : ""}${flagsText(p)}`;
-    if (topic === "感情") return `${base}${p.god === "六合" ? "有和合、人緣或媒合訊號，" : ""}${["玄武", "螣蛇"].includes(p.god) ? "但曖昧、猜測與話沒講清楚會變成問題，" : ""}${flagsText(p)}`;
-    if (topic === "事業") return `${base}${["開門", "景門", "生門"].includes(p.door) ? "有對外開展、曝光或資源機會，" : ""}${flagsText(p)}`;
-    if (topic === "健康") return `${base}這是盤象提醒，偏向壓力、作息、舊問題或身心耗損；身體仍以醫療檢查為準。${flagsText(p)}`;
-    return `${base}${flagsText(p)}`;
+    if (topic === "財運") return `${base}${p.door === "生門" ? "有資源與收入訊號，" : ""}${p.star === "天心星" ? "偏向用專業、技術、判斷力換錢，" : ""}${flagsText(p, globalResonance)}`;
+    if (topic === "感情") return `${base}${p.god === "六合" ? "有和合、人緣或媒合訊號，" : ""}${["玄武", "螣蛇"].includes(p.god) ? "但曖昧、猜測與話沒講清楚會變成問題，" : ""}${flagsText(p, globalResonance)}`;
+    if (topic === "事業") return `${base}${["開門", "景門", "生門"].includes(p.door) ? "有對外開展、曝光或資源機會，" : ""}${flagsText(p, globalResonance)}`;
+    if (topic === "健康") return `${base}這是盤象提醒，偏向壓力、作息、舊問題或身心耗損；身體仍以醫療檢查為準。${flagsText(p, globalResonance)}`;
+    return `${base}${flagsText(p, globalResonance)}`;
   }
   function explain(chart, options = {}) {
+    const globalResonance = ["干伏吟", "門伏吟", "星伏吟", "干反吟", "門反吟", "星反吟"].filter((flag) => explanationPalaces(chart).length === 8 && explanationPalaces(chart).every((p) => p.flags.includes(flag)));
     const first = explanationPalace(chart, chart.first_yongshen_palace);
     const second = explanationPalace(chart, chart.second_yongshen_palace);
     const good = explanationPalaces(chart).sort((a, b) => palaceScore(b) - palaceScore(a)).slice(0, 4);
@@ -753,21 +754,21 @@
       `主客關係：${relationText}`,
       "",
       "二、用神判斷",
-      `第一用神（${isPrediction ? "問測者/日干" : "命主/日干"}）：${first ? `落${first.name}，${palaceTone(first)}。${flagsText(first)}` : "未見有效落宮，暫不解說。"}`,
-      `第二用神（${isPrediction ? "所問事/時干" : "行為反應/時干"}）：${second ? `落${second.name}，${palaceTone(second)}。${flagsText(second)}` : "未見有效落宮，暫不解說。"}`,
+      `第一用神（${isPrediction ? "問測者/日干" : "命主/日干"}）：${first ? `落${first.name}，${palaceTone(first)}。${flagsText(first, globalResonance)}` : "未見有效落宮，暫不解說。"}`,
+      `第二用神（${isPrediction ? "所問事/時干" : "行為反應/時干"}）：${second ? `落${second.name}，${palaceTone(second)}。${flagsText(second, globalResonance)}` : "未見有效落宮，暫不解說。"}`,
       "",
       "三、各項運勢",
       `本次主題：${topic}`,
-      ...["財運", "感情", "事業", "健康"].flatMap((t) => topicLines(chart, t)),
+      ...["財運", "感情", "事業", "健康"].flatMap((t) => topicLines(chart, t, globalResonance)),
       "",
       "四、可用宮位",
-      ...good.map((p) => `- ${p.name}：${p.god}、${p.star}、${p.door}。適合用「${stripEnd(DOOR_FEEL[p.door] || "依盤面取用")}」的方式處理。${flagsText(p)}`),
+      ...good.map((p) => `- ${p.name}：${p.god}、${p.star}、${p.door}。適合用「${stripEnd(DOOR_FEEL[p.door] || "依盤面取用")}」的方式處理。${flagsText(p, globalResonance)}`),
       "",
       `五、四害與動象：${chart.global_flags.join("、") || "無"}。特殊標註：${chart.special_flags.join("、") || "無"}。馬星在${chart.horse_star}，代表事情有移動、變化或需要主動走出去的部分。十二長生用干為${chart.longevity_stem}。`,
     ];
     if (risks.length) {
       lines.push("", "六、風險位");
-      risks.forEach((p) => lines.push(`- ${p.name}：${[...(p.flags || []), ...(p.special_flags || [])].join("、")}。${flagsText(p)}`));
+      risks.forEach((p) => lines.push(`- ${p.name}：${[...(p.flags || []), ...(p.special_flags || [])].filter((flag) => !globalResonance.includes(flag)).join("、") || "無其他標記"}。${flagsText(p, globalResonance)}`));
     }
     lines.push("", "七、行動建議");
     if (relationText.includes("生第二")) lines.push("- 你會是付出與推動的一方，適合主動，但要設定時間、金錢與情緒停損。");
@@ -775,7 +776,7 @@
     else if (relationText.includes("剋第一")) lines.push("- 壓力在你身上，先守住基本盤，重大決策不要一次押滿。");
     else if (relationText.includes("剋第二")) lines.push("- 你能控制局面，但語氣與手段要柔一點，避免把好事推硬。");
     else lines.push("- 先把條件說清楚，再用可用宮位的方向去推進。");
-    lines.push("", ...caseStyleLines(chart, options, first, second, wealth, relationship, career, health));
+    lines.push("", ...caseStyleLines(chart, options, first, second, wealth, relationship, career, health, globalResonance));
     return lines.join("\n");
   }
   function toResponse(chart, options = {}) {
